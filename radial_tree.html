@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
+    integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+<style>
+    body{
+        background-color: black;
+    }
+    svg{
+        background-color: black;
+    }
+    .node text {
+        font: 12px sans-serif;
+    }
+
+    .node.active text {
+        opacity: 100;
+        /* font-weight: bold; */
+    }
+
+    .node--internal circle {
+        /* fill: rgb(175, 175, 175); */
+    }
+
+    .node--internal text {
+        text-shadow: 0 1px 0 #fff, 0 -1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff;
+    }
+
+    .node--leaf text {
+        text-shadow: 0 1px 0 rgb(238, 58, 238), 0 -1px 0 rgb(238, 58, 238), 1px 0 0 rgb(238, 58, 238), -1px 0 0 rgb(238, 58, 238);
+    }
+
+    .link {
+        fill: none;
+        stroke: white;
+        /* stroke-width: 0.5; */
+        /* opacity: 0.1; */
+    }
+
+    g.node {
+        cursor: pointer;
+    }
+
+    text {
+        font-family: FontAwesome;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    .nav {
+        margin-top: 2em;
+        margin-left: 3%;
+    }
+
+    button{
+        position: relative;
+        color: black;
+        background-color: white;
+        border-color: white;
+        margin-right: 1em;
+    }
+
+</style>
+<div class='nav'>
+    <button type="button" class="btn" id="btn_update" value="1">Update data</button>
+    <button type="button" class="btn" id="back" value="2">Back</button>
+</div>
+<div class='canvas'>
+    <svg width="1060" height="1060"></svg>
+</div>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+    // var svg = d3.select(".plot").append('svg')
+    //     width = +svg.node().getBoundingClientRect().width,
+    //     height = +svg.node().getBoundingClientRect().height;
+    // svg.attr("viewBox", [0, 0, width, height]) //the area of where the network fits|min-x,min-y,width,height
+
+    var svg = d3.select("svg")
+        .attr('id','svg')
+        width = +svg.node().getBoundingClientRect().width,
+        height = +svg.node().getBoundingClientRect().height,
+        radius = 400,
+        g = svg.append("g")
+        .attr("transform", "translate(" + (width / 2) + "," + (height / 2) + ")")
+        .attr("viewBox", [0, 0, width, height]);
+
+    // var stratify = d3.stratify()
+    //     .parentId(function (d) {
+    //         return d.id.substring(0, d.id.lastIndexOf("."));
+    //     });
+
+    var tree = d3.tree()
+        .size([2 * Math.PI, radius])
+        .separation(function (a, b) {
+            return (a.parent == b.parent ? 1 : 2) / a.depth;
+        });
+
+    const depthScale = d3.scaleOrdinal()
+            // .domain([0,5])
+            // .range(['#F1F9FB','#314F94']);
+            .domain([0,1,2,3,4,5])
+            .range(['white','#F1F9FB','#DDF1F2','#BAD7EA','#628ABF','#314F94']);
+
+    d3.json("./data/tree_milano_advisory.json", function (error, data) {
+        if (error) throw error;
+
+        update(data);
+
+    });
+
+    function update(data){
+        var root = tree(d3.hierarchy(data));
+        console.log(root.descendants());
+
+        var link = g.selectAll(".link")
+            .data(root.links())
+            .enter().append("path")
+            .attr("class", "link")
+            .attr("d", d3.linkRadial()
+                .angle(function (d) {
+                    return d.x;
+                })
+                .radius(function (d) {
+                    return d.y;
+                }))
+            .style("stroke-width", function(d){
+                //console.log(d.source.data.number)
+                //return 0.05*d.source.data.number;
+                return 0.25;
+            });
+
+        var node = g.selectAll(".node")
+            .data(root.descendants())
+            .enter().append("g")
+            .attr("class", function (d) {
+                return "node" + (d.children ? " node--internal" : " node--leaf");
+            })
+            .attr("transform", function (d) {
+                return "translate(" + radialPoint(d.x, d.y) + ")";
+            })
+            .on("mouseover", function () {
+                d3.select(this).classed("active", true);
+            }).on("mouseout", function () {
+                d3.select(this).classed("active", false);
+            });
+
+        
+        node.append("circle")
+            .attr("r", function (d){
+                return d.data.number;
+                // return 1.5;
+            })
+            .attr("fill", function(d){
+                return depthScale(d.data.validation)
+            })
+            .style('opacity',0.75);
+        
+        // link.append("line")
+        //     .attr('stroke', "#888")
+        //     .attr("opacity", function (d){
+        //         return Math.sqrt(data.number);
+        //     })
+
+        node.append("text")
+            .attr("dy", "0.31em")
+            .attr("x", function (d) {
+                return d.x < Math.PI === !d.children ? 6 : -6;
+            })
+            .attr("text-anchor", function (d) {
+                return d.x < Math.PI === !d.children ? "start" : "end";
+            })
+            .attr("transform", function (d) {
+                return "rotate(" + (d.x < Math.PI ? d.x - Math.PI / 2 : d.x + Math.PI / 2) * 180 / Math.PI +
+                    ")";
+            })
+            // .text(function (d) {
+            //     if (d.data.name == "Milano, Advisory") {
+            //         return d.data.name;
+            //     } else {
+            //         d3.select(this).attr("opacity", 0)
+            //         //return (`${d.data.name}`);
+            //         return (`${d.data.name},${d3.format('.2f')(d.data.value)}`);  
+            //     }
+            // });
+    }
+    function radialPoint(x, y) {
+        return [(y = +y) * Math.cos(x -= Math.PI / 2), y * Math.sin(x)];
+    }
+</script>
