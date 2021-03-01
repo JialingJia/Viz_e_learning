@@ -8,7 +8,7 @@ var simulation = d3.forceSimulation()
     .force("link", d3.forceLink().id(function (d) {
         return d.id;
     }))
-    .force("charge", d3.forceManyBody().strength(-200))
+    .force("charge", d3.forceManyBody().strength(-300))
     .force("collide", d3.forceCollide())
     .force("center", d3.forceCenter(width / 2, height / 2));
 
@@ -141,7 +141,7 @@ function update() {
         })
         .attr("stroke", function(d){
             if (d.target === "Procurement & Cost Management"){
-                return "#0AABB3";
+                return;
             }
         })
     .attr("stroke-width", function (d) {
@@ -166,14 +166,14 @@ function update() {
     newNode.append("circle")
         .attr("r", function (d) {
             if (d.domain) {
-                return (0.1*d.degree);
+                return (0.2*d.degree);
             } else {
                 return 2;
             }
         })
         .attr("fill", function (d) {
             if (d.id === "Procurement & Cost Management") {
-                return '#0AABB3';
+                return '#c0c0c0';
             } else if (d.domain) {
                 return '#c0c0c0';
             }else {
@@ -185,15 +185,15 @@ function update() {
             .on("drag", dragged)
             .on("end", dragended))
 
-    newNode.append("text")
-        .text(function (d) {
-            if (d.domain) {
-                return d.id;
-            }
-        })
-        .attr('x', 6)
-        .attr('y', 3)
-        .attr('fill','white');
+    // newNode.append("text")
+    //     .text(function (d) {
+    //         if (d.domain) {
+    //             return d.id;
+    //         }
+    //     })
+    //     .attr('x', 6)
+    //     .attr('y', 3)
+    //     .attr('fill','white');
 
     node = node.merge(newNode);
 
