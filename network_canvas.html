@@ -1,96 +1,13 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<style>
-  /*	style definitions	*/
-  button {
-    position: absolute;
-  }
 
-  #red {
-    top: 1em;
-    left: 1em;
-  }
-</style>
-<button type="button" class="filter-btn" id="red" value="1">Filter Red</button>
-<canvas width="1000" height="1000"></canvas>
-<script src="https://d3js.org/d3.v4.min.js"></script>
-<script>
-  var canvas = document.querySelector("canvas"),
-    context = canvas.getContext("2d"),
-    width = canvas.width,
-    height = canvas.height;
+<head>
+  <link rel="stylesheet" href="../css/network.css">
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+</head>
 
-  var simulation = d3.forceSimulation()
-    .force("link", d3.forceLink().id(function (d) {
-      return d.id;
-    }))
-    .force("charge", d3.forceManyBody())
-    .force("collide", d3.forceCollide())
-    .force("center", d3.forceCenter());
-
-  // //	filtered types
-  // typeFilterList = [];
-
-  // //	filter button event handlers
-  // $(".filter-btn").on("click", function () {
-  //   var id = $(this).attr("value");
-  //   if (typeFilterList.includes(id)) {
-  //     typeFilterList.splice(typeFilterList.indexOf(id), 1)
-  //   } else {
-  //     typeFilterList.push(id);
-  //   }
-  //   filter();
-  //   update();
-  // });
-
-  d3.json("./data/graph_roma.json", function (error, graph) {
-    if (error) throw error;
-
-    simulation
-      .nodes(graph.nodes)
-      .on("tick", ticked);
-
-    simulation.force("link")
-      .links(graph.links);
-
-    simulation.force("collide").radius((d) => {
-      return d.degree * 0.01
-    })
-
-    function ticked() {
-      context.clearRect(0, 0, width, height);
-      context.save();
-      context.translate(width / 2, height / 2 + 40);
-
-      for (const node of graph.nodes) {
-        context.beginPath();
-        drawNode(node)
-        if (node.age_groups === "60-69") {
-          context.fillStyle = "red";
-          context.fill();
-        } else {
-          context.fillStyle = "black";
-          context.fill();
-        }
-      }
-
-      context.restore();
-    }
-  });
-
-  // function drawLink(d) {
-  //   context.moveTo(d.source.x, d.source.y);
-  //   context.lineTo(d.target.x, d.target.y);
-  // }
-
-  function drawNode(d) {
-    context.moveTo(d.x + 3, d.y);
-    if (d.domain) {
-      context.arc(d.x, d.y, d.degree * 0.008, 0, 2 * Math.PI);
-      context.font = "18px roboto";
-      context.fillText(d.id, d.x + 20, d.y - 10);
-    } else {
-      context.arc(d.x, d.y, 2, 0, 2 * Math.PI);
-    }
-  }
-</script>
+<body>
+  <!-- <button type="button" class="filter-btn" id="red" value="1">Filter Red</button> -->
+  <div id="graph"></div>
+  <script src="../js/network.js"></script>
+</body>
