@@ -103,7 +103,7 @@
             .domain([0,1,2,3,4,5])
             .range(['white','#F1F9FB','#DDF1F2','#BAD7EA','#628ABF','#314F94']);
 
-    d3.json("./data/tree_lombardia.json", function (error, data) {
+    d3.json("data/tree_lombardia.json", function (error, data) {
         if (error) throw error;
 
         update(data);
