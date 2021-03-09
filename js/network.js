@@ -79,6 +79,7 @@ d3.json("./data/proto_data.json", function (error, graph) {
         if (closeNode) {
             context.beginPath();
             for (const edge of graph.links) {
+                // if mouse over domain
                 if (edge.target.id == closeNode.id) {
                     context.beginPath();
 
@@ -89,6 +90,20 @@ d3.json("./data/proto_data.json", function (error, graph) {
 
                     drawNode(edge.source);
                     context.arc(edge.source.x, edge.source.y, 1, 0, 2 * Math.PI);
+                    context.fillStyle = "rgba(10, 171, 179, 1)";
+                    context.fill();
+                }
+                // if mouse over employee
+                else if (edge.source.id == closeNode.id) {
+                    context.beginPath();
+
+                    drawLink(edge);
+                    context.strokeStyle = "rgba(10, 171, 179, 0.5)";
+                    context.lineWidth = 1;
+                    context.stroke();
+
+                    drawNode(edge.target);
+                    context.arc(edge.target.x, edge.target.y, edge.target.degree * 0.004, 0, 2 * Math.PI);
                     context.fillStyle = "rgba(10, 171, 179, 1)";
                     context.fill();
                 }
@@ -104,7 +119,7 @@ d3.json("./data/proto_data.json", function (error, graph) {
             function getFont() {
                 // var ratio = 0.003;
                 var size = Math.log(closeNode.degree) * 2;
-                return (size|0) + "px roboto";
+                return (size | 0) + "px roboto";
             }
 
             if (closeNode.domain) {
@@ -126,7 +141,7 @@ d3.json("./data/proto_data.json", function (error, graph) {
     d3.select(canvas).on("mousemove", function () {
         var p = d3.mouse(this);
         var pZoom = transform.invert(p);
-        closeNode = simulation.find(pZoom[0],pZoom[1]);
+        closeNode = simulation.find(pZoom[0], pZoom[1]);
         // console.log(p);
         ticked();
     })
