@@ -143,7 +143,9 @@ d3.json("./data/proto_data.json", function (error, graph) {
         var pZoom = transform.invert(p);
         closeNode = simulation.find(pZoom[0], pZoom[1]);
         // console.log(p);
-        ticked();
+    });
+    d3.select(canvas).on("mouseout", function(){
+        closeNode = NaN;
     })
 
     // for (const edge of graph.links) {
