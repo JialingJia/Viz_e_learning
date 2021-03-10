@@ -1,12 +1,42 @@
+  /* general */
   body {
       background-color: black;
-  }
-  
-  button {
-      position: absolute;
+      font-family: Roboto;
+      font-size: 14px;
+      color: white;
   }
 
-  #red {
-      top: 1em;
-      left: 1em;
+  /* typography */
+  h1 {
+      font-weight: medium;
+      font-size: 18px;
+      color: white;
+  }
+
+  label {
+      color: white;
+  }
+
+  /* nav */
+  .navbar {
+      z-index: 2;
+      background-color: #242424;
+  }
+
+  .navbar-start > .navbar-item {
+      padding-left: 1.5em;
+  }
+
+  .navbar-end > .navbar-item {
+      padding: 0 2em;
+      border-left: 2px solid rgb(0, 0, 0);
+  }
+
+  .navbar-item > label {
+      padding-right: 1em;
+  }
+  
+  /* graph */
+  #graph {
+      z-index: auto;
   }

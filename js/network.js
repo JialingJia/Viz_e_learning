@@ -12,7 +12,7 @@ var simulation = d3.forceSimulation()
     .force("link", d3.forceLink().id(function (d) {
         return d.id;
     }))
-    .force("charge", d3.forceManyBody().strength(-10))
+    .force("charge", d3.forceManyBody().strength(-6))
     .force("collide", d3.forceCollide().strength(0.2).radius(0.5))
     .force("center", d3.forceCenter(width / 2, height / 2))
     .alphaTarget(0)
@@ -24,8 +24,36 @@ d3.json("./data/proto_data.json", function (error, graph) {
 
     initGraph(graph)
 
+    var degree;
+
     function initGraph(tempData) {
 
+        // calculate degree simultaneously
+        var degreeList = [];
+        for (const edge of graph.links) {
+            degreeList.push(edge.target);
+        }
+
+        function aggregate(array) {
+            var obj = {};
+            array.forEach(function (val) {
+                if (!obj[val])
+                    // create new property if property is not found
+                    obj[val] = 1;
+                else
+                    // increment matched property by 1
+                    obj[val]++;
+            });
+            return obj;
+        }
+
+        var degreeData = aggregate(degreeList);
+        degree = Object.keys(degreeData).map(key => ({
+            id: key,
+            weight: degreeData[key]
+        }));
+
+        // create zooming
         function zoomed() {
             transform = d3.event.transform;
             ticked();
@@ -48,21 +76,32 @@ d3.json("./data/proto_data.json", function (error, graph) {
 
     }
 
-    function ticked() {
-        context.save();
+    console.log(degree);
 
+    function ticked() {
+
+        // set font based on degree
+        function getFont(val) {
+            var size = Math.log(val.degree) * 1.5;
+            return (size | 0) + "px roboto";
+        }
+
+        // draw nodes and edges
+        context.save();
         context.clearRect(0, 0, width, height);
         context.translate(transform.x, transform.y)
         context.scale(transform.k, transform.k)
-        // context.translate(width / 2, height / 2);
 
         for (const node of graph.nodes) {
             context.beginPath();
             drawNode(node);
             // console.log(node);
             if (node.domain) {
+
+                var newDegree = degree.find(o => o.id === node.id);
+
                 context.fillStyle = "rgba(255, 255, 255, 0.5)";
-                context.arc(node.x, node.y, node.degree * 0.004, 0, 2 * Math.PI);
+                context.arc(node.x, node.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
                 context.fill();
 
                 // context.fillStyle = "rgba(255, 255, 255, 1)";
@@ -75,8 +114,8 @@ d3.json("./data/proto_data.json", function (error, graph) {
             }
         }
 
-        //add conditions for tooltips
-        if (closeNode) {
+        //add draw conditions for tooltips
+        if (closeNode && filterValue === 'default') {
             context.beginPath();
             for (const edge of graph.links) {
                 // if mouse over domain
@@ -115,21 +154,38 @@ d3.json("./data/proto_data.json", function (error, graph) {
             context.arc(closeNode.x, closeNode.y, closeNode.degree * 0.004, 0, 2 * Math.PI);
             context.fill();
 
-            // set font based on degree
-            function getFont() {
-                // var ratio = 0.003;
-                var size = Math.log(closeNode.degree) * 2;
-                return (size | 0) + "px roboto";
-            }
-
             if (closeNode.domain) {
                 context.fillStyle = "rgba(240, 240, 240, 1)";
-                context.font = getFont();
+                context.font = getFont(closeNode);
                 context.fillText(closeNode.id, closeNode.x + 20, closeNode.y + 10);
             } else {
                 context.fillStyle = "rgba(255, 255, 255, 1)";
                 context.font = "10px roboto";
                 context.fillText(closeNode.id, closeNode.x + 20, closeNode.y - 10);
+            }
+        }
+
+        //add draw conditions based on group filter
+        if (filterValue === "gender") {
+            for (const node of graph.nodes) {
+                context.beginPath();
+                drawNode(node);
+
+                if (!node.domain) {
+                    if (node.sex === "F") {
+                        context.fillStyle = "rgba(255, 253, 41, 0.3)";
+                        context.arc(node.x, node.y, 1, 0, 2 * Math.PI);
+                        context.fill();
+                    } else {
+                        context.fillStyle = "rgba(196, 71, 255, 0.3)";
+                        context.arc(node.x, node.y, 1, 0, 2 * Math.PI);
+                        context.fill();
+                    }
+                } else {
+                    context.fillStyle = "rgba(240, 240, 240, 0.8)";
+                    context.font = getFont(node);
+                    context.fillText(node.id, node.x + 20, node.y + 10);
+                }
             }
         }
 
@@ -144,7 +200,7 @@ d3.json("./data/proto_data.json", function (error, graph) {
         closeNode = simulation.find(pZoom[0], pZoom[1]);
         // console.log(p);
     });
-    d3.select(canvas).on("mouseout", function(){
+    d3.select(canvas).on("mouseout", function () {
         closeNode = NaN;
     })
 
@@ -208,6 +264,20 @@ d3.json("./data/proto_data.json", function (error, graph) {
     }
 
     context.restore();
+
+    // filter color by different groups
+    var filterValue = $('#group').val();
+    console.log(filterValue);
+    $('#group').change(function () {
+
+        context.save();
+        context.clearRect(0, 0, width, height);
+        context.translate(transform.x, transform.y)
+        context.scale(transform.k, transform.k)
+
+        filterValue = $(this).val();
+        console.log(filterValue);
+    })
 });
 
 function drawLink(d) {

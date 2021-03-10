@@ -2,12 +2,46 @@
 <meta charset="utf-8">
 
 <head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
   <link rel="stylesheet" href="css/network.css">
   <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
 </head>
 
 <body>
-  <!-- <button type="button" class="filter-btn" id="red" value="1">Filter Red</button> -->
+  <nav class="navbar" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+      <a class="navbar-item">
+        <h1>Knowledge Network</h1>
+      </a>
+    </div>
+    <div class="navbar-menu">
+      <div class="navbar-start">
+        <div class="navbar-item">
+          <a href=""><span class="tag is-light">Switch to Hierarchy</span></a>
+        </div>
+      </div>
+      <div class="navbar-end">
+        <div class="navbar-item">
+          <label for="">group:</label>
+          <div class="select is-small">
+            <select id="group">
+              <option value="default">default</option>
+              <option value="gender">gender</option>
+              <option value="age">age</option>
+              <option value="persona">persona</option>
+            </select>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <label class="checkbox">
+            <input type="checkbox">
+            view score
+          </label>
+        </div>
+      </div>
+    </div>
+  </nav>
   <div id="graph"></div>
   <script src="js/network.js"></script>
 </body>
