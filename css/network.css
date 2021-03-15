@@ -1,7 +1,8 @@
   /* general */
   body {
       background-color: black;
-      font-family: Roboto;
+      font-family: 'Roboto',
+          sans-serif;
       font-size: 14px;
       color: white;
   }
@@ -23,19 +24,19 @@
       background-color: #242424;
   }
 
-  .navbar-start > .navbar-item {
+  .navbar-start>.navbar-item {
       padding-left: 1.5em;
   }
 
-  .navbar-end > .navbar-item {
+  .navbar-end>.navbar-item {
       padding: 0 2em;
       border-left: 2px solid rgb(0, 0, 0);
   }
 
-  .navbar-item > label {
+  .navbar-item>label {
       padding-right: 1em;
   }
-  
+
   /* graph */
   #graph {
       z-index: auto;

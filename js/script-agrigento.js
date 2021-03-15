@@ -129,6 +129,8 @@ function update() {
         return d.id;
     });
 
+    console.log("link1:" + link);
+
     link.exit().remove();
 
     var newLink = link
@@ -151,6 +153,8 @@ function update() {
     //console.log(newLink)
 
     link = link.merge(newLink);
+
+    console.log("link2:" + link);
 
     // update node
     node = node.data(g.nodes, function (d) {
