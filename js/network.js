@@ -430,17 +430,17 @@ d3.json("./data/proto_data.json", function (error, graph) {
 
         if (filterRegion === "all") {
 
-            store.nodes.forEach(function (d) {
-                g.nodes.splice(d, 1);
-                g.nodes.push($.extend(true, {}, d))
-            });
-            store.links.forEach(function (d) {
-                g.links.splice(d, 1);
-                g.links.push($.extend(true, {}, d))
-            })
-            console.log(g);
+            // store.nodes.forEach(function (d) {
+            //     g.nodes.splice(d, 1);
+            //     g.nodes.push($.extend(true, {}, d))
+            // });
+            // store.links.forEach(function (d) {
+            //     g.links.splice(d, 1);
+            //     g.links.push($.extend(true, {}, d))
+            // })
+            // console.log(g);
 
-            initGraph(g);
+            // initGraph(g);
 
         } else {
 
