@@ -129,9 +129,10 @@ function update() {
         return d.id;
     });
 
-    console.log("link1:" + link);
+    console.log("updateLink:",link);
 
     link.exit().remove();
+
 
     var newLink = link
         .enter().append("line")
@@ -150,11 +151,13 @@ function update() {
         return Math.sqrt(d.degree)
     });
 
-    //console.log(newLink)
+    console.log("newLink:", newLink);
 
     link = link.merge(newLink);
 
-    console.log("link2:" + link);
+    // console.log();
+
+    console.log("finalLink:", link);
 
     // update node
     node = node.data(g.nodes, function (d) {

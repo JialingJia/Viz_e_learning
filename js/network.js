@@ -24,57 +24,66 @@ var transform = d3.zoomIdentity;
 
 var g, store;
 
+var link = dataContainer.selectAll("custom.line");
+var node = dataContainer.selectAll("custom.circle");
+
 d3.json("./data/proto_data.json", function (error, graph) {
     if (error) throw error;
+
+    var degree, selfScore, validScore;
 
     g = graph;
     store = $.extend(true, {}, graph);
 
-    console.log(g);
-
     initGraph();
 
-    var degree, selfScore, validScore;
-    // var link, node;
+    // console.log(nodes.data());
 
     function initGraph() {
 
-        link = dataContainer.selectAll("custom.rect").data(g.links);
-        node = dataContainer.selectAll("custom.rect").data(g.nodes);
+        // update selections
+        link = link.data(g.links, function (d) {
+            return d.id;
+        })
+        node = node.data(g.nodes, function (d) {
+            return d.id;
+        })
 
-        // link = link.data(g.links, function(d){return d.id});
-        // node = node.data(g.nodes, function(d){return d.id});
+        console.log("updateNode:", node);
+        console.log("updateLink:", link);
 
-        // // update links
-        link.exit();
-        // var newLink = link.enter().data(g.links, function (d) {
-        //     return d.id
-        // });
-        // link = link.merge(newLink);
-        console.log(link);
+        // update links and nodes
+        var newLink = link.enter().append("custom").attr("class", "line");
+        var newNode = node.enter().append("custom").attr("class", "circle");
 
-        // // update nodes
-        node.exit();
-        // var newNode = node.enter().data(g.nodes, function (d) {
-        //     return d.id
-        // });
-        // node = node.merge(newNode);
-        // console.log(node);
+        console.log("newNode:", newNode);
+        // console.log(g.nodes);
 
-        console.log(node);
+        // update + enter
+        link = link.merge(newLink);
+        node = node.merge(newNode);
 
+        // exit selections
+        link.exit().remove();
+        node.exit().remove();
+
+        console.log("finalNode:", node);
 
         // calculate degree and score simultaneously
         var degreeList = [];
         var scoreList = []
-        for (const edge of g.links) {
+        g.links.forEach(function (edge, i) {
+            // console.log(edge.target);
             degreeList.push(edge.target);
             scoreList.push({
                 "key": edge.target,
                 "selfScore": edge.self_score,
                 "validScore": edge.valid_score
             })
-        }
+        })
+
+        console.log("finalLink:", link);
+        // console.log(degreeList);
 
         function aggregate(array) {
             var obj = {};
@@ -144,6 +153,10 @@ d3.json("./data/proto_data.json", function (error, graph) {
 
     function ticked() {
 
+        // console.log(nodes);
+        // var nodes = dataContainer.selectAll('custom.circle');
+        // var links = dataContainer.selectAll('custom.line');
+
         // set font based on degree
         function getFont(val) {
             var size = Math.log(val.degree) * 1.5;
@@ -156,7 +169,7 @@ d3.json("./data/proto_data.json", function (error, graph) {
         context.translate(transform.x, transform.y)
         context.scale(transform.k, transform.k)
 
-        for (const node of g.nodes) {
+        g.nodes.forEach(function (node, i) {
             context.beginPath();
             drawNode(node);
             // console.log(node);
@@ -176,14 +189,14 @@ d3.json("./data/proto_data.json", function (error, graph) {
                 context.fillStyle = "rgba(255, 255, 255, 0.2)";
                 context.fill();
             }
-        }
+        })
 
         //add draw conditions for tooltips
         if (closeNode && filterValue === 'default' && !score) {
             context.beginPath();
             drawNode(closeNode);
 
-            for (const edge of g.links) {
+            g.links.forEach(function (edge, i) {
                 // if mouse over domain
                 if (edge.target.id == closeNode.id) {
                     context.beginPath();
@@ -214,7 +227,7 @@ d3.json("./data/proto_data.json", function (error, graph) {
                     context.fillStyle = "rgba(10, 171, 179, 1)";
                     context.fill();
                 }
-            }
+            })
 
             if (closeNode.domain) {
 
@@ -243,7 +256,7 @@ d3.json("./data/proto_data.json", function (error, graph) {
 
         //add draw conditions based on group filter
         if (filterValue === "gender") {
-            for (const node of g.nodes) {
+            g.nodes.forEach(function (node, i) {
                 context.beginPath();
                 drawNode(node);
 
@@ -262,7 +275,7 @@ d3.json("./data/proto_data.json", function (error, graph) {
                     context.font = getFont(node);
                     context.fillText(node.id, node.x + 20, node.y + 10);
                 }
-            }
+            })
         }
 
         var ageColor = [{
@@ -335,9 +348,6 @@ d3.json("./data/proto_data.json", function (error, graph) {
             }
         }
 
-
-
-
         context.restore();
     }
 
@@ -358,8 +368,8 @@ d3.json("./data/proto_data.json", function (error, graph) {
             y = transform.invertY(d3.event.y),
             dx,
             dy;
-        for (i = graph.nodes.length - 1; i >= 0; --i) {
-            node = graph.nodes[i];
+        for (i = g.nodes.length - 1; i >= 0; --i) {
+            node = g.nodes[i];
             dx = x - node.x;
             dy = y - node.y;
 
@@ -397,11 +407,6 @@ d3.json("./data/proto_data.json", function (error, graph) {
     console.log("filter:", filterValue);
     $('#group').change(function () {
 
-        // context.save();
-        // context.clearRect(0, 0, width, height);
-        // context.translate(transform.x, transform.y)
-        // context.scale(transform.k, transform.k)
-
         filterValue = $(this).val();
         console.log(filterValue);
     })
@@ -438,43 +443,133 @@ d3.json("./data/proto_data.json", function (error, graph) {
             initGraph(g);
 
         } else {
-            filterNodes = g.nodes.filter(d => {
-                return d.region === "Lombardia";
+
+            // g.nodes = g.nodes.filter(function (d) {
+            //     if (d.region === "Lombardia") {
+            //         return d;
+            //     }
+            // })
+
+            // g.links = g.links.filter(function (d) {
+            //     if (d.source.region === "Lombardia") {
+            //         return d;
+            //     }
+            // })
+
+            // for (const item in node){
+            //     return item;
+            // }
+
+            // g.nodes = [];
+            // g.links = [];
+
+            // node.filter(function (d, i) {
+            //     if (d.region === "Lombardia" || d.domain === "Y") {
+            //         g.nodes.push(d);
+            //     } else {
+            //         g.nodes.splice(i, 1);
+            //     }
+            // })
+
+            // link.filter(function (d, i) {
+            //     if (d.source.region === "Lombardia") {
+            //         g.links.push(d);
+            //     } else {
+            //         g.links.splice(i, 1)
+            //     }
+            // })
+
+            var nodes = [];
+            var links = [];
+
+            // store.nodes.forEach(function (d, i) {
+            //     if (!d.domain && d.region !== "Lombardia") {
+            //         g.nodes.forEach(function (n, i) {
+            //             if (d.id === n.id) {
+            //                 g.nodes.splice(i, 1)
+            //             }
+            //         })
+            //     }
+            // })
+
+            node.each(function(d){
+                if (!d.domain && d.region !== "Lombardia"){
+                } else {
+                    nodes.push(d);
+                }
             })
 
-            filterLinks = g.links.filter(d => {
-                return d.source.region === "Lombardia";
-            })
+            console.log(nodes);
 
-            knowledge = g.nodes.filter(d => {
-                return d.domain;
-            })
+            // g.links.forEach(function (d) {
+            //     // console.log(d.source);
+            //     if (d.source.region === "Lombardia") {
+            //         links.push($.extend(true, {}, d))
+            //     }
+            // })
 
-            g.nodes = [];
-            g.links = [];
+            // g.links = [];
 
-            filterNodes.forEach(function (d) {
-                g.nodes.push($.extend(true, {}, d))
-            })
-
-            knowledge.forEach(function (d) {
-                g.nodes.push($.extend(true, {}, d))
-            })
-
-            filterLinks.forEach(function (d) {
-                g.links.push($.extend(true, {}, d))
-            })
-
-            // store.nodes.forEach(function (d) {
-            //     g.nodes.splice(d, 1);
-            //     g.nodes.push($.extend(true, {}, d))
-            // });
-            // store.links.forEach(function (d) {
-            //     g.links.splice(d, 1);
+            // links.forEach(function (d) {
             //     g.links.push($.extend(true, {}, d))
             // })
 
-            // console.log(g);
+            link.each(function(d){
+                if (d.source.region === "Lombardia") {
+                    links.push($.extend(true, {}, d))
+                }
+            })
+
+            console.log(links);
+
+            g.nodes = nodes;
+            g.links = links;
+
+            // g.links.forEach(function (d, i) {
+            //     if (d.source.region === "Lombardia") {
+            //         links.push($.extend(true, {}, d))
+            //     }
+            // })
+
+            // // console.log(nodes);
+
+            // g.nodes = []
+            // g.links = []
+
+            // nodes.forEach(function (d) {
+            //     g.nodes.push($.extend(true, {}, d))
+            // })
+
+            // links.forEach(function (d) {
+            //     g.links.push($.extend(true, {}, d))
+            // })
+
+            // store.links.forEach(function(d) {
+            //     if (d.source.region === "Lombardia") {
+            //         g.links.push($.extend(true, {}, d))
+            //     } else {
+            //         g.links.forEach(function (n, i) {
+            //             if (n.id === d.id) {
+            //                 g.links.splice(i, 1);
+            //             }
+            //         })
+            //     }
+            // })
+
+            // console.log(g.nodes);
+
+            // nodes.forEach(function(d){
+            //     g.nodes.push($.extend(true, {}, d))
+            // })
+
+            // links.forEach(function(d){
+            //     g.links.push($.extend(true, {}, d))
+            // })
+
+            // g.nodes = nodes;
+            // g.links = links;
+
+            // console.log(nodes);
 
             initGraph();
 
