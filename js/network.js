@@ -24,13 +24,12 @@ var transform = d3.zoomIdentity;
 
 var g, store;
 
-var link = dataContainer.selectAll("custom.line");
-var node = dataContainer.selectAll("custom.circle");
-
 d3.json("./data/proto_data.json", function (error, graph) {
     if (error) throw error;
 
     var degree, selfScore, validScore;
+    var link = dataContainer.selectAll("custom.line");
+    var node = dataContainer.selectAll("custom.circle");
 
     g = graph;
     store = $.extend(true, {}, graph);
@@ -69,20 +68,35 @@ d3.json("./data/proto_data.json", function (error, graph) {
 
         console.log("finalNode:", node);
 
+        simulation
+            .nodes(g.nodes)
+            .on("tick", ticked);
+
+        simulation.force("link")
+            .links(g.links);
+
+        simulation.force('collide', d3.forceCollide(d => d.degree * 0.005));
+
+        // simulation.force("collide").strength(0.2).radius(function (d) {
+        //     return d.degree * 0.005;
+        // })
+
+        simulation.alpha(.8).restart();
+
         // calculate degree and score simultaneously
         var degreeList = [];
         var scoreList = []
-        g.links.forEach(function (edge, i) {
+        link.each(function (edge, i) {
             // console.log(edge.target);
-            degreeList.push(edge.target);
+            degreeList.push(edge.target.id);
             scoreList.push({
-                "key": edge.target,
+                "key": edge.target.id,
                 "selfScore": edge.self_score,
                 "validScore": edge.valid_score
             })
         })
 
-        console.log("finalLink:", link);
+        // console.log("finalLink:", link);
         // console.log(degreeList);
 
         function aggregate(array) {
@@ -126,7 +140,7 @@ d3.json("./data/proto_data.json", function (error, graph) {
             valid_score: aggregateValidscore[key] / degreeData[key]
         }))
 
-        console.log(degreeData);
+        // console.log(degree);
 
         // create zooming
         function zoomed() {
@@ -137,17 +151,6 @@ d3.json("./data/proto_data.json", function (error, graph) {
         d3.select(canvas)
             .call(d3.drag().subject(dragsubject).on("start", dragstarted).on("drag", dragged).on("end", dragended))
             .call(d3.zoom().scaleExtent([1 / 10, 8]).on("zoom", zoomed))
-
-        simulation
-            .nodes(g.nodes)
-            .on("tick", ticked);
-
-        simulation.force("link")
-            .links(g.links);
-
-        simulation.force("collide").radius((d) => {
-            return d.degree * 0.007
-        })
 
     }
 
@@ -169,34 +172,34 @@ d3.json("./data/proto_data.json", function (error, graph) {
         context.translate(transform.x, transform.y)
         context.scale(transform.k, transform.k)
 
-        g.nodes.forEach(function (node, i) {
+        for (const circle of g.nodes) {
             context.beginPath();
-            drawNode(node);
+            drawNode(circle);
             // console.log(node);
-            if (node.domain) {
+            if (circle.domain) {
 
-                var newDegree = degree.find(o => o.id === node.id);
+                var newDegree = degree.find(o => o.id === circle.id);
 
                 context.fillStyle = "rgba(255, 255, 255, 0.5)";
-                context.arc(node.x, node.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                context.arc(circle.x, circle.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
                 context.fill();
 
                 // context.fillStyle = "rgba(255, 255, 255, 1)";
                 // context.font = "18px roboto";
                 // context.fillText(node.id, node.x + 20, node.y - 10);
             } else {
-                context.arc(node.x, node.y, 1, 0, 2 * Math.PI);
+                context.arc(circle.x, circle.y, 1, 0, 2 * Math.PI);
                 context.fillStyle = "rgba(255, 255, 255, 0.2)";
                 context.fill();
             }
-        })
+        }
 
         //add draw conditions for tooltips
         if (closeNode && filterValue === 'default' && !score) {
             context.beginPath();
             drawNode(closeNode);
 
-            g.links.forEach(function (edge, i) {
+            for (const edge of g.links) {
                 // if mouse over domain
                 if (edge.target.id == closeNode.id) {
                     context.beginPath();
@@ -227,7 +230,7 @@ d3.json("./data/proto_data.json", function (error, graph) {
                     context.fillStyle = "rgba(10, 171, 179, 1)";
                     context.fill();
                 }
-            })
+            }
 
             if (closeNode.domain) {
 
@@ -250,32 +253,32 @@ d3.json("./data/proto_data.json", function (error, graph) {
 
                 context.fillStyle = "rgba(255, 255, 255, 1)";
                 context.font = "10px roboto";
-                context.fillText(closeNode.id, closeNode.x + 20, closeNode.y - 10);
+                context.fillText((closeNode.id + " " + closeNode.region), closeNode.x + 20, closeNode.y - 10);
             }
         }
 
         //add draw conditions based on group filter
         if (filterValue === "gender") {
-            g.nodes.forEach(function (node, i) {
+            for (const circle of g.nodes) {
                 context.beginPath();
-                drawNode(node);
+                drawNode(circle);
 
-                if (!node.domain) {
-                    if (node.sex === "F") {
+                if (!circle.domain) {
+                    if (circle.sex === "F") {
                         context.fillStyle = "rgba(255, 253, 41, 0.3)";
-                        context.arc(node.x, node.y, 1, 0, 2 * Math.PI);
+                        context.arc(circle.x, circle.y, 1, 0, 2 * Math.PI);
                         context.fill();
                     } else {
                         context.fillStyle = "rgba(196, 71, 255, 0.3)";
-                        context.arc(node.x, node.y, 1, 0, 2 * Math.PI);
+                        context.arc(circle.x, circle.y, 1, 0, 2 * Math.PI);
                         context.fill();
                     }
                 } else {
                     context.fillStyle = "rgba(240, 240, 240, 0.8)";
-                    context.font = getFont(node);
-                    context.fillText(node.id, node.x + 20, node.y + 10);
+                    context.font = getFont(circle);
+                    context.fillText(circle.id, circle.x + 20, circle.y + 10);
                 }
-            })
+            }
         }
 
         var ageColor = [{
@@ -305,42 +308,42 @@ d3.json("./data/proto_data.json", function (error, graph) {
         ];
 
         if (filterValue === "age") {
-            for (const node of g.nodes) {
+            for (const circle of g.nodes) {
                 context.beginPath();
-                drawNode(node);
+                drawNode(circle);
 
-                if (!node.domain) {
-                    var newColor = ageColor.find(o => o.age === node.age_groups);
+                if (!circle.domain) {
+                    var newColor = ageColor.find(o => o.age === circle.age_groups);
                     context.fillStyle = newColor.color;
-                    context.arc(node.x, node.y, 1, 0, 2 * Math.PI);
+                    context.arc(circle.x, circle.y, 1, 0, 2 * Math.PI);
                     context.fill();
                 } else {
                     context.fillStyle = "rgba(240, 240, 240, 0.8)";
-                    context.font = getFont(node);
-                    context.fillText(node.id, node.x + 20, node.y + 10);
+                    context.font = getFont(circle);
+                    context.fillText(circle.id, circle.x + 20, circle.y + 10);
                 }
             }
         }
 
         if (score) {
-            for (const node of g.nodes) {
-                if (node.domain) {
+            for (const circle of g.nodes) {
+                if (circle.domain) {
 
-                    var newDegree = degree.find(o => o.id === node.id);
-                    var newSelfscore = selfScore.find(o => o.id === node.id);
+                    var newDegree = degree.find(o => o.id === circle.id);
+                    var newSelfscore = selfScore.find(o => o.id === circle.id);
                     // var newValidscore = validScore.find(o => o.id === node.id);
                     context.beginPath();
-                    drawNode(node);
+                    drawNode(circle);
 
-                    context.arc(node.x, node.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                    context.arc(circle.x, circle.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
                     context.fillStyle = 'rgb(' + Math.floor(255 - 83.3 * newSelfscore.self_score) + ', ' +
                         Math.floor(255 - 47 * newSelfscore.self_score) + ', ' +
                         Math.floor(255 - 40.3 * newSelfscore.self_score) + ')';
                     context.fill();
 
                     context.fillStyle = "rgba(240, 240, 240, 1)";
-                    context.font = getFont(node);
-                    context.fillText(node.id + " " + newSelfscore.self_score.toFixed(2), node.x + 20, node.y + 10);
+                    context.font = getFont(circle);
+                    context.fillText(circle.id + " " + newSelfscore.self_score.toFixed(2), circle.x + 20, circle.y + 10);
 
                     // console.log(newSelfscore);
 
@@ -423,153 +426,56 @@ d3.json("./data/proto_data.json", function (error, graph) {
     })
 
     // filter nodes
-    var filterRegion;
-
     $("#region").change(function () {
-        filterRegion = $(this).val();
+        var filterRegion = $(this).val();
+        console.log(filterRegion);
 
         if (filterRegion === "all") {
 
-            // store.nodes.forEach(function (d) {
-            //     g.nodes.splice(d, 1);
-            //     g.nodes.push($.extend(true, {}, d))
-            // });
-            // store.links.forEach(function (d) {
-            //     g.links.splice(d, 1);
-            //     g.links.push($.extend(true, {}, d))
-            // })
-            // console.log(g);
+            g.links = [];
+            g.nodes = [];
 
-            // initGraph(g);
+            store.links.forEach(function (d, i) {
+                g.links.push($.extend(true, {}, d));
+            });
+
+            store.nodes.forEach(function (d) {
+                g.nodes.push($.extend(true, {}, d));
+            })
+
+            console.log(g.nodes);
+
+            initGraph();
 
         } else {
 
-            // g.nodes = g.nodes.filter(function (d) {
-            //     if (d.region === "Lombardia") {
-            //         return d;
-            //     }
-            // })
+            var nodeList = [];
 
-            // g.links = g.links.filter(function (d) {
-            //     if (d.source.region === "Lombardia") {
-            //         return d;
-            //     }
-            // })
+            // g.nodes = store.nodes;
+            // g.links = store.links;
 
-            // for (const item in node){
-            //     return item;
-            // }
-
-            // g.nodes = [];
-            // g.links = [];
-
-            // node.filter(function (d, i) {
-            //     if (d.region === "Lombardia" || d.domain === "Y") {
-            //         g.nodes.push(d);
-            //     } else {
-            //         g.nodes.splice(i, 1);
-            //     }
-            // })
-
-            // link.filter(function (d, i) {
-            //     if (d.source.region === "Lombardia") {
-            //         g.links.push(d);
-            //     } else {
-            //         g.links.splice(i, 1)
-            //     }
-            // })
-
-            var nodes = [];
-            var links = [];
-
-            // store.nodes.forEach(function (d, i) {
-            //     if (!d.domain && d.region !== "Lombardia") {
-            //         g.nodes.forEach(function (n, i) {
-            //             if (d.id === n.id) {
-            //                 g.nodes.splice(i, 1)
-            //             }
-            //         })
-            //     }
-            // })
-
-            node.each(function(d){
-                if (!d.domain && d.region !== "Lombardia"){
+            store.nodes.forEach(function (d, i) {
+                if (!d.domain && d.region !== filterRegion) {
+                    g.nodes.forEach(function (n, i) {
+                        if (d.id === n.id) {
+                            g.nodes.splice(i, 1);
+                        }
+                    })
                 } else {
-                    nodes.push(d);
+                    nodeList.push(d.id);
                 }
             })
 
-            console.log(nodes);
-
-            // g.links.forEach(function (d) {
-            //     // console.log(d.source);
-            //     if (d.source.region === "Lombardia") {
-            //         links.push($.extend(true, {}, d))
-            //     }
-            // })
-
-            // g.links = [];
-
-            // links.forEach(function (d) {
-            //     g.links.push($.extend(true, {}, d))
-            // })
-
-            link.each(function(d){
-                if (d.source.region === "Lombardia") {
-                    links.push($.extend(true, {}, d))
+            var links = [];
+            g.links.forEach(function (d, i) {
+                if (d.source.region === filterRegion) {
+                    links.push(d);
                 }
             })
 
-            console.log(links);
-
-            g.nodes = nodes;
             g.links = links;
 
-            // g.links.forEach(function (d, i) {
-            //     if (d.source.region === "Lombardia") {
-            //         links.push($.extend(true, {}, d))
-            //     }
-            // })
-
-            // // console.log(nodes);
-
-            // g.nodes = []
-            // g.links = []
-
-            // nodes.forEach(function (d) {
-            //     g.nodes.push($.extend(true, {}, d))
-            // })
-
-            // links.forEach(function (d) {
-            //     g.links.push($.extend(true, {}, d))
-            // })
-
-            // store.links.forEach(function(d) {
-            //     if (d.source.region === "Lombardia") {
-            //         g.links.push($.extend(true, {}, d))
-            //     } else {
-            //         g.links.forEach(function (n, i) {
-            //             if (n.id === d.id) {
-            //                 g.links.splice(i, 1);
-            //             }
-            //         })
-            //     }
-            // })
-
-            // console.log(g.nodes);
-
-            // nodes.forEach(function(d){
-            //     g.nodes.push($.extend(true, {}, d))
-            // })
-
-            // links.forEach(function(d){
-            //     g.links.push($.extend(true, {}, d))
-            // })
-
-            // g.nodes = nodes;
-            // g.links = links;
-
-            // console.log(nodes);
+            console.log(g.links);
 
             initGraph();
 
