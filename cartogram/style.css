@@ -1,0 +1,49 @@
+body {
+  background-color: #222;
+}
+
+.canvas {
+  width: 800px;
+  height: 800px;
+}
+
+.info {
+  color: #5EFFEF;
+  position: absolute;
+}
+
+path.province{
+  /* display: none; */
+  fill: #333;
+  stroke: white;
+  stroke-opacity: 0.2;
+  stroke-width: 0.1;
+}
+
+circle.province {
+  stroke: #5EFFEF;
+  stroke-opacity: 0.9;
+  stroke-width: 0.5;
+  fill: #5EFFEF;
+  fill-opacity: 0.5;
+}
+
+circle.highlighted {
+  fill-opacity: 0.6;
+  stroke-width: 1;
+  stroke: #78fff2;
+}
+
+.province-label {
+  pointer-events:inherit;
+  font-family: Arial, sans-serif;
+  font-size: 21px;
+  fill: white;
+}
+
+.txt_province {
+  font-family: Arial, sans-serif;
+  font-size: 5px;
+  fill: white;
+  text-anchor: middle;
+}
