@@ -274,6 +274,13 @@ d3.json("./data/proto_data.json", function (error, graph) {
                         context.fill();
                     }
                 } else {
+
+                    var newDegree = degree.find(o => o.id === circle.id);
+
+                    context.fillStyle = "rgba(255, 255, 255, 0.5)";
+                    context.arc(circle.x, circle.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                    context.fill();
+
                     context.fillStyle = "rgba(240, 240, 240, 0.8)";
                     context.font = getFont(circle);
                     context.fillText(circle.id, circle.x + 20, circle.y + 10);
@@ -318,6 +325,11 @@ d3.json("./data/proto_data.json", function (error, graph) {
                     context.arc(circle.x, circle.y, 1, 0, 2 * Math.PI);
                     context.fill();
                 } else {
+                    var newDegree = degree.find(o => o.id === circle.id);
+                    context.fillStyle = "rgba(255, 255, 255, 0.5)";
+                    context.arc(circle.x, circle.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                    context.fill();
+                    
                     context.fillStyle = "rgba(240, 240, 240, 0.8)";
                     context.font = getFont(circle);
                     context.fillText(circle.id, circle.x + 20, circle.y + 10);
