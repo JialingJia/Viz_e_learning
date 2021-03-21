@@ -8,6 +8,7 @@
     href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="css/network.css">
+  <script src="https://d3js.org/topojson.v1.min.js"></script>
   <script src="https://d3js.org/d3.v4.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
     integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous">
@@ -45,7 +46,7 @@
             view score
           </label>
         </div>
-        <div class="navbar-item">
+        <!-- <div class="navbar-item">
           <label for="">region:</label>
           <div class="select is-small">
             <select id="region">
@@ -53,10 +54,13 @@
               <option value="Lombardia">Lombardia</option>
             </select>
           </div>
-        </div>
+        </div> -->
       </div>
     </div>
   </nav>
-  <div id="graph"></div>
+  <div id="network"></div>
+  <div id="cartogram">
+    <h4 class='info'></h4>
+  </div>
   <script src="js/network.js"></script>
 </body>
