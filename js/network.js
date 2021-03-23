@@ -60,9 +60,37 @@ d3.queue()
         var g, store;
         var degree, selfScore, validScore;
         var minDegree, maxDegree;
+        var degreeList, scoreList, degreeData;
 
         var threshold_a = 200;
         var threshold_b = 100;
+
+        var radius_a = 0.004;
+        var radius_b = 0.04;
+        var radius_c = 0.1;
+
+        // real-time calculation
+        function aggregate(array) {
+            var obj = {};
+            array.forEach(function (val) {
+                if (!obj[val])
+                    obj[val] = 1;
+                else
+                    obj[val]++;
+            });
+            return obj;
+        }
+
+        function aggregateScore(array, score) {
+            var obj = {};
+            array.forEach(function (val) {
+                if (!obj[val.key])
+                    obj[val.key] = val[score];
+                else
+                    obj[val.key] = val[score] + obj[val.key];
+            });
+            return obj;
+        }
 
         g = graph;
         store = $.extend(true, {}, graph);
@@ -118,8 +146,9 @@ d3.queue()
             simulation.alpha(.8).restart();
 
             // calculate degree and score simultaneously
-            var degreeList = [];
-            var scoreList = []
+            degreeList = [];
+            scoreList = []
+
             link.each(function (edge, i) {
                 // console.log(edge.target);
                 degreeList.push(edge.target.id);
@@ -133,29 +162,7 @@ d3.queue()
             // console.log("finalLink:", link);
             // console.log("degreelist:", degreeList);
 
-            function aggregate(array) {
-                var obj = {};
-                array.forEach(function (val) {
-                    if (!obj[val])
-                        obj[val] = 1;
-                    else
-                        obj[val]++;
-                });
-                return obj;
-            }
-
-            function aggregateScore(array, score) {
-                var obj = {};
-                array.forEach(function (val) {
-                    if (!obj[val.key])
-                        obj[val.key] = val[score];
-                    else
-                        obj[val.key] = val[score] + obj[val.key];
-                });
-                return obj;
-            }
-
-            var degreeData = aggregate(degreeList);
+            degreeData = aggregate(degreeList);
             var aggregateSelfscore = aggregateScore(scoreList, "selfScore");
             var aggregateValidscore = aggregateScore(scoreList, "validScore");
 
@@ -174,7 +181,7 @@ d3.queue()
                 valid_score: aggregateValidscore[key] / degreeData[key]
             }))
 
-            // console.log("degreeData:", degreeData);
+            console.log("degreeData:", degreeData);
             minDegree = Math.min.apply(null, degree.map(item => item.weight));
             maxDegree = Math.max.apply(null, degree.map(item => item.weight));
             // console.log("minDegree:", minDegree);
@@ -186,6 +193,8 @@ d3.queue()
             degree.forEach(function (d) {
                 d.norWeight = normalize(d.weight, maxDegree, minDegree);
             });
+
+            // console.log("degreeList: ", degreeList);
             console.log("degree:", degree);
 
 
@@ -201,6 +210,7 @@ d3.queue()
                     }
                 } else {
                     if (d.domain === "Y") {
+                        // console.log(d.id);
                         var newDegree = degree.find(o => o.id === d.id);
                         return newDegree.weight * 0.2;
                     } else {
@@ -229,7 +239,7 @@ d3.queue()
 
             // set font based on degree
             function getFont(val) {
-                var size = Math.log(val.degree) * 1.5;
+                var size = Math.log(val.weight) * 1.5;
                 return (size | 0) + "px roboto";
             }
 
@@ -250,13 +260,13 @@ d3.queue()
 
                     // console.log("maxDegree:", maxDegree);
 
-                    context.fillStyle = "rgba(255, 255, 255, 0.5)";
+                    context.fillStyle = "rgba(200, 200, 200, 1)";
                     if (maxDegree > threshold_a) {
-                        context.arc(circle.x, circle.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                        context.arc(circle.x, circle.y, newDegree.weight * radius_a, 0, 2 * Math.PI);
                     } else if (threshold_a > maxDegree > threshold_b) {
-                        context.arc(circle.x, circle.y, newDegree.weight * 0.02, 0, 2 * Math.PI);
+                        context.arc(circle.x, circle.y, newDegree.weight * radius_b, 0, 2 * Math.PI);
                     } else {
-                        context.arc(circle.x, circle.y, newDegree.weight * 0.1, 0, 2 * Math.PI);
+                        context.arc(circle.x, circle.y, newDegree.weight * radius_c, 0, 2 * Math.PI);
                     }
                     context.fill();
 
@@ -303,11 +313,11 @@ d3.queue()
 
                         drawNode(edge.target);
                         if (maxDegree > threshold_a) {
-                            context.arc(edge.target.x, edge.target.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                            context.arc(edge.target.x, edge.target.y, newDegree.weight * radius_a, 0, 2 * Math.PI);
                         } else if (threshold_a > maxDegree > threshold_b) {
-                            context.arc(edge.target.x, edge.target.y, newDegree.weight * 0.02, 0, 2 * Math.PI);
+                            context.arc(edge.target.x, edge.target.y, newDegree.weight * radius_b, 0, 2 * Math.PI);
                         } else {
-                            context.arc(edge.target.x, edge.target.y, newDegree.weight * 0.1, 0, 2 * Math.PI);
+                            context.arc(edge.target.x, edge.target.y, newDegree.weight * radius_c, 0, 2 * Math.PI);
                         }
                         context.fillStyle = "rgba(10, 171, 179, 1)";
                         context.fill();
@@ -321,18 +331,18 @@ d3.queue()
 
                     drawNode(closeNode);
                     if (maxDegree > threshold_a) {
-                        context.arc(closeNode.x, closeNode.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                        context.arc(closeNode.x, closeNode.y, newDegree.weight * radius_a, 0, 2 * Math.PI);
                     } else if (threshold_a > maxDegree > threshold_b) {
-                        context.arc(closeNode.x, closeNode.y, newDegree.weight * 0.02, 0, 2 * Math.PI);
+                        context.arc(closeNode.x, closeNode.y, newDegree.weight * radius_b, 0, 2 * Math.PI);
                     } else {
-                        context.arc(closeNode.x, closeNode.y, newDegree.weight * 0.1, 0, 2 * Math.PI);
+                        context.arc(closeNode.x, closeNode.y, newDegree.weight * radius_c, 0, 2 * Math.PI);
                     }
                     context.fillStyle = "rgba(10, 171, 179, 1)";
                     context.fill();
 
                     context.fillStyle = "rgba(240, 240, 240, 1)";
-                    context.font = getFont(closeNode);
-                    context.fillText(closeNode.id, closeNode.x + 25, closeNode.y + 10);
+                    context.font = getFont(newDegree);
+                    context.fillText(closeNode.id, closeNode.x + 2, closeNode.y + 2);
 
                 } else {
 
@@ -368,21 +378,20 @@ d3.queue()
                         }
                     } else {
 
-
-
                         context.fillStyle = "rgba(255, 255, 255, 0.5)";
+
                         if (maxDegree > threshold_a) {
-                            context.arc(circle.x, circle.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                            context.arc(circle.x, circle.y, newDegree.weight * radius_a, 0, 2 * Math.PI);
                         } else if (threshold_a > maxDegree > threshold_b) {
-                            context.arc(circle.x, circle.y, newDegree.weight * 0.02, 0, 2 * Math.PI);
+                            context.arc(circle.x, circle.y, newDegree.weight * radius_b, 0, 2 * Math.PI);
                         } else {
-                            context.arc(circle.x, circle.y, newDegree.weight * 0.1, 0, 2 * Math.PI);
+                            context.arc(circle.x, circle.y, newDegree.weight * radius_c, 0, 2 * Math.PI);
                         }
                         context.fill();
 
                         context.fillStyle = "rgba(240, 240, 240, 0.8)";
-                        context.font = getFont(circle);
-                        context.fillText(circle.id, circle.x + 25, circle.y + 10);
+                        context.font = getFont(newDegree);
+                        context.fillText(circle.id, circle.x + 2, circle.y + 2);
                     }
                 }
             }
@@ -430,17 +439,17 @@ d3.queue()
 
                         context.fillStyle = "rgba(255, 255, 255, 0.5)";
                         if (maxDegree > threshold_a) {
-                            context.arc(circle.x, circle.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                            context.arc(circle.x, circle.y, newDegree.weight * radius_a, 0, 2 * Math.PI);
                         } else if (threshold_a > maxDegree > threshold_b) {
-                            context.arc(circle.x, circle.y, newDegree.weight * 0.02, 0, 2 * Math.PI);
+                            context.arc(circle.x, circle.y, newDegree.weight * radius_b, 0, 2 * Math.PI);
                         } else {
-                            context.arc(circle.x, circle.y, newDegree.weight * 0.1, 0, 2 * Math.PI);
+                            context.arc(circle.x, circle.y, newDegree.weight * radius_c, 0, 2 * Math.PI);
                         }
                         context.fill();
 
                         context.fillStyle = "rgba(240, 240, 240, 0.8)";
-                        context.font = getFont(circle);
-                        context.fillText(circle.id, circle.x + 20, circle.y + 10);
+                        context.font = getFont(newDegree);
+                        context.fillText(circle.id, circle.x + 2, circle.y + 2);
                     }
                 }
             }
@@ -458,11 +467,11 @@ d3.queue()
                         drawNode(circle);
 
                         if (maxDegree > threshold_a) {
-                            context.arc(circle.x, circle.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                            context.arc(circle.x, circle.y, newDegree.weight * radius_a, 0, 2 * Math.PI);
                         } else if (threshold_a > maxDegree > threshold_b) {
-                            context.arc(circle.x, circle.y, newDegree.weight * 0.02, 0, 2 * Math.PI);
+                            context.arc(circle.x, circle.y, newDegree.weight * radius_b, 0, 2 * Math.PI);
                         } else {
-                            context.arc(circle.x, circle.y, newDegree.weight * 0.1, 0, 2 * Math.PI);
+                            context.arc(circle.x, circle.y, newDegree.weight * radius_c, 0, 2 * Math.PI);
                         }
                         context.fillStyle = 'rgb(' + Math.floor(255 - 83.3 * newSelfscore.self_score) + ', ' +
                             Math.floor(255 - 47 * newSelfscore.self_score) + ', ' +
@@ -470,8 +479,8 @@ d3.queue()
                         context.fill();
 
                         context.fillStyle = "rgba(240, 240, 240, 1)";
-                        context.font = getFont(circle);
-                        context.fillText(circle.id + " " + newSelfscore.self_score.toFixed(2), circle.x + 20, circle.y + 10);
+                        context.font = getFont(newDegree);
+                        context.fillText(circle.id + " " + newSelfscore.self_score.toFixed(2), circle.x + 2, circle.y + 2);
 
                         // console.log(newSelfscore);
 
@@ -733,42 +742,63 @@ d3.queue()
         circles.exit().remove();
 
         // filter nodes
+        function filterData() {
+            var domainList = [];
+            var links = [];
+
+            // filter link
+            g.links.forEach(function (d, i) {
+                if (d.source.region === filterReg) {
+                    links.push(d);
+                }
+            })
+
+            g.links = links;
+
+            // find corresponding domains
+            links.forEach(function (d, i) {
+                domainList.push(d.target.id);
+            })
+
+            domainList = domainList.filter((v, i, a) => a.indexOf(v) === i);
+
+            // update nodes
+            store.nodes.forEach(function (d, i) {
+                if (!d.domain && d.region !== filterReg) {
+                    g.nodes.forEach(function (n, i) {
+                        if (d.id === n.id) {
+                            g.nodes.splice(i, 1);
+                        }
+                    })
+                } else if (d.domain && !domainList.includes(d.id)) {
+                    console.log(d.id);
+                    g.nodes.forEach(function (n, i) {
+                        if (d.id === n.id) {
+                            g.nodes.splice(i, 1);
+                        }
+                    })
+                }
+            })
+
+            initGraph();
+        }
+
+        // display filter region
         var prin_selected = d3.select('.selected');
+
         prin_selected.append('text')
             .classed('.selected-label', true)
             .text("selected region: all");
 
+        // toggle filter by event
         circles.on('click', function (d) {
 
             prin_selected.text("selected region: " + d.properties.reg_name);
 
             if (!filterNewReg) {
-                // d3.select(this).classed('highlighted', true);
+
                 filterNewReg = filterReg; // record current region name
-                var nodeList = [];
-
-                store.nodes.forEach(function (d, i) {
-                    if (!d.domain && d.region !== filterReg) {
-                        g.nodes.forEach(function (n, i) {
-                            if (d.id === n.id) {
-                                g.nodes.splice(i, 1);
-                            }
-                        })
-                    } 
-                    else {
-                        // nodeList.push(d.id);
-                    }
-                })
-                var links = [];
-                g.links.forEach(function (d, i) {
-                    if (d.source.region === filterReg) {
-                        links.push(d);
-                    }
-                })
-
-                g.links = links;
-
-                initGraph();
+                filterData();
 
             } else if (filterNewReg && filterNewReg !== filterReg) {
                 // reset to have all nodes
@@ -783,33 +813,14 @@ d3.queue()
                     g.nodes.push($.extend(true, {}, d));
                 })
 
+                console.log("g.nodes:", g.nodes);
+
                 initGraph();
 
                 // filter by new region name
-                filterNewReg = filterReg;
-                var nodeList = [];
-                store.nodes.forEach(function (d, i) {
-                    if (!d.domain && d.region !== filterReg) {
-                        g.nodes.forEach(function (n, i) {
-                            if (d.id === n.id) {
-                                g.nodes.splice(i, 1);
-                            }
-                        })
-                    } 
-                    else {
-                        // nodeList.push(d.id);
-                    }
-                })
-                var links = [];
-                g.links.forEach(function (d, i) {
-                    if (d.source.region === filterReg) {
-                        links.push(d);
-                    }
-                })
+                filterNewReg = filterReg; // record current region name
 
-                g.links = links;
-
-                initGraph();
+                filterData();
             }
         })
 
@@ -830,14 +841,16 @@ d3.queue()
                 g.nodes = [];
 
                 store.links.forEach(function (d, i) {
+                    // g.nodes.splice(d,1)
                     g.links.push($.extend(true, {}, d));
                 });
 
                 store.nodes.forEach(function (d) {
+                    // g.links.splice(d,1)
                     g.nodes.push($.extend(true, {}, d));
                 })
 
-                console.log(g.nodes);
+                // console.log("g.nodes:", g.nodes);
 
                 initGraph();
             }
@@ -899,6 +912,4 @@ d3.queue()
             // }
 
         })
-
-
     })
