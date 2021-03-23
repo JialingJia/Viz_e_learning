@@ -44,8 +44,9 @@ var pathGenerator = d3.geoPath()
 
 // Math
 var k = 2;
+
 function sigmoid(z) {
-  return (1 + Math.exp(-z/k));
+    return (1 + Math.exp(-z / k));
 }
 
 // load data
@@ -58,7 +59,10 @@ d3.queue()
         // graph
         var g, store;
         var degree, selfScore, validScore;
-        var minDegree;
+        var minDegree, maxDegree;
+
+        var threshold_a = 200;
+        var threshold_b = 100;
 
         g = graph;
         store = $.extend(true, {}, graph);
@@ -106,8 +110,6 @@ d3.queue()
 
             simulation.force("link")
                 .links(g.links);
-
-            simulation.force('collide', d3.forceCollide(d => d.degree * 0.005));
 
             // simulation.force("collide").strength(0.2).radius(function (d) {
             //     return d.degree * 0.005;
@@ -172,9 +174,40 @@ d3.queue()
                 valid_score: aggregateValidscore[key] / degreeData[key]
             }))
 
-            console.log("degree:", degree);
+            // console.log("degreeData:", degreeData);
             minDegree = Math.min.apply(null, degree.map(item => item.weight));
-            console.log("minDegree:", minDegree);
+            maxDegree = Math.max.apply(null, degree.map(item => item.weight));
+            // console.log("minDegree:", minDegree);
+
+            // normalize degree into 0-1
+            function normalize(val, max, min) {
+                return (val - min) / (max - min);
+            }
+            degree.forEach(function (d) {
+                d.norWeight = normalize(d.weight, maxDegree, minDegree);
+            });
+            console.log("degree:", degree);
+
+
+            // var newDegree = degree.find(o => o.id === node.id);
+            // console.log("node.id:", link.target.id)
+            simulation.force('collide', d3.forceCollide(function (d) {
+                if (maxDegree > threshold_a) {
+                    if (d.domain === "Y") {
+                        var newDegree = degree.find(o => o.id === d.id);
+                        return newDegree.weight * 0.004;
+                    } else {
+                        return d.degree * 0.004;
+                    }
+                } else {
+                    if (d.domain === "Y") {
+                        var newDegree = degree.find(o => o.id === d.id);
+                        return newDegree.weight * 0.2;
+                    } else {
+                        return d.degree * 0.004;
+                    }
+                }
+            }));
 
             // create zooming
             function zoomed() {
@@ -213,9 +246,18 @@ d3.queue()
                 if (circle.domain) {
 
                     var newDegree = degree.find(o => o.id === circle.id);
+                    var maxDegree = Math.max.apply(null, degree.map(item => item.weight))
+
+                    // console.log("maxDegree:", maxDegree);
 
                     context.fillStyle = "rgba(255, 255, 255, 0.5)";
-                    context.arc(circle.x, circle.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                    if (maxDegree > threshold_a) {
+                        context.arc(circle.x, circle.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                    } else if (threshold_a > maxDegree > threshold_b) {
+                        context.arc(circle.x, circle.y, newDegree.weight * 0.02, 0, 2 * Math.PI);
+                    } else {
+                        context.arc(circle.x, circle.y, newDegree.weight * 0.1, 0, 2 * Math.PI);
+                    }
                     context.fill();
 
                     // context.fillStyle = "rgba(255, 255, 255, 1)";
@@ -234,6 +276,8 @@ d3.queue()
                 drawNode(closeNode);
 
                 for (const edge of g.links) {
+                    var newDegree = degree.find(o => o.id === edge.target.id);
+                    var maxDegree = Math.max.apply(null, degree.map(item => item.weight));
                     // if mouse over domain
                     if (edge.target.id == closeNode.id) {
                         context.beginPath();
@@ -257,10 +301,14 @@ d3.queue()
                         context.lineWidth = 1;
                         context.stroke();
 
-                        var newDegree = degree.find(o => o.id === edge.target.id);
-
                         drawNode(edge.target);
-                        context.arc(edge.target.x, edge.target.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                        if (maxDegree > threshold_a) {
+                            context.arc(edge.target.x, edge.target.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                        } else if (threshold_a > maxDegree > threshold_b) {
+                            context.arc(edge.target.x, edge.target.y, newDegree.weight * 0.02, 0, 2 * Math.PI);
+                        } else {
+                            context.arc(edge.target.x, edge.target.y, newDegree.weight * 0.1, 0, 2 * Math.PI);
+                        }
                         context.fillStyle = "rgba(10, 171, 179, 1)";
                         context.fill();
                     }
@@ -269,14 +317,22 @@ d3.queue()
                 if (closeNode.domain) {
 
                     var newDegree = degree.find(o => o.id === closeNode.id);
+                    var maxDegree = Math.max.apply(null, degree.map(item => item.weight));
+
                     drawNode(closeNode);
-                    context.arc(closeNode.x, closeNode.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                    if (maxDegree > threshold_a) {
+                        context.arc(closeNode.x, closeNode.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                    } else if (threshold_a > maxDegree > threshold_b) {
+                        context.arc(closeNode.x, closeNode.y, newDegree.weight * 0.02, 0, 2 * Math.PI);
+                    } else {
+                        context.arc(closeNode.x, closeNode.y, newDegree.weight * 0.1, 0, 2 * Math.PI);
+                    }
                     context.fillStyle = "rgba(10, 171, 179, 1)";
                     context.fill();
 
                     context.fillStyle = "rgba(240, 240, 240, 1)";
                     context.font = getFont(closeNode);
-                    context.fillText(closeNode.id, closeNode.x + 20, closeNode.y + 10);
+                    context.fillText(closeNode.id, closeNode.x + 25, closeNode.y + 10);
 
                 } else {
 
@@ -297,6 +353,9 @@ d3.queue()
                     context.beginPath();
                     drawNode(circle);
 
+                    var newDegree = degree.find(o => o.id === circle.id);
+                    var maxDegree = Math.max.apply(null, degree.map(item => item.weight));
+
                     if (!circle.domain) {
                         if (circle.sex === "F") {
                             context.fillStyle = "rgba(255, 253, 41, 0.3)";
@@ -309,15 +368,21 @@ d3.queue()
                         }
                     } else {
 
-                        var newDegree = degree.find(o => o.id === circle.id);
+
 
                         context.fillStyle = "rgba(255, 255, 255, 0.5)";
-                        context.arc(circle.x, circle.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                        if (maxDegree > threshold_a) {
+                            context.arc(circle.x, circle.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                        } else if (threshold_a > maxDegree > threshold_b) {
+                            context.arc(circle.x, circle.y, newDegree.weight * 0.02, 0, 2 * Math.PI);
+                        } else {
+                            context.arc(circle.x, circle.y, newDegree.weight * 0.1, 0, 2 * Math.PI);
+                        }
                         context.fill();
 
                         context.fillStyle = "rgba(240, 240, 240, 0.8)";
                         context.font = getFont(circle);
-                        context.fillText(circle.id, circle.x + 20, circle.y + 10);
+                        context.fillText(circle.id, circle.x + 25, circle.y + 10);
                     }
                 }
             }
@@ -353,15 +418,24 @@ d3.queue()
                     context.beginPath();
                     drawNode(circle);
 
+                    var newDegree = degree.find(o => o.id === circle.id);
+                    var maxDegree = Math.max.apply(null, degree.map(item => item.weight));
+
                     if (!circle.domain) {
                         var newColor = ageColor.find(o => o.age === circle.age_groups);
                         context.fillStyle = newColor.color;
                         context.arc(circle.x, circle.y, 1, 0, 2 * Math.PI);
                         context.fill();
                     } else {
-                        var newDegree = degree.find(o => o.id === circle.id);
+
                         context.fillStyle = "rgba(255, 255, 255, 0.5)";
-                        context.arc(circle.x, circle.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                        if (maxDegree > threshold_a) {
+                            context.arc(circle.x, circle.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                        } else if (threshold_a > maxDegree > threshold_b) {
+                            context.arc(circle.x, circle.y, newDegree.weight * 0.02, 0, 2 * Math.PI);
+                        } else {
+                            context.arc(circle.x, circle.y, newDegree.weight * 0.1, 0, 2 * Math.PI);
+                        }
                         context.fill();
 
                         context.fillStyle = "rgba(240, 240, 240, 0.8)";
@@ -376,12 +450,20 @@ d3.queue()
                     if (circle.domain) {
 
                         var newDegree = degree.find(o => o.id === circle.id);
+                        var maxDegree = Math.max.apply(null, degree.map(item => item.weight));
+
                         var newSelfscore = selfScore.find(o => o.id === circle.id);
                         // var newValidscore = validScore.find(o => o.id === node.id);
                         context.beginPath();
                         drawNode(circle);
 
-                        context.arc(circle.x, circle.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                        if (maxDegree > threshold_a) {
+                            context.arc(circle.x, circle.y, newDegree.weight * 0.004, 0, 2 * Math.PI);
+                        } else if (threshold_a > maxDegree > threshold_b) {
+                            context.arc(circle.x, circle.y, newDegree.weight * 0.02, 0, 2 * Math.PI);
+                        } else {
+                            context.arc(circle.x, circle.y, newDegree.weight * 0.1, 0, 2 * Math.PI);
+                        }
                         context.fillStyle = 'rgb(' + Math.floor(255 - 83.3 * newSelfscore.self_score) + ', ' +
                             Math.floor(255 - 47 * newSelfscore.self_score) + ', ' +
                             Math.floor(255 - 40.3 * newSelfscore.self_score) + ')';
@@ -528,6 +610,20 @@ d3.queue()
             regionList.push(d.region);
         })
 
+        function aggregate(array) {
+            var obj = {};
+            array.forEach(function (val) {
+                if (!obj[val])
+                    obj[val] = 1;
+                else
+                    obj[val]++;
+            });
+            return obj;
+        }
+
+        var regionCal = aggregate(regionList);
+        console.log("regionCal:", regionCal);
+
         var uniqueRegion = regionList.filter((v, i, a) => a.indexOf(v) === i);
 
         console.log("uniqueRegion:", uniqueRegion);
@@ -612,7 +708,7 @@ d3.queue()
         // simulationGeo.alpha(1).restart();
 
         // add filter for the network data
-        var filterReg;
+        var filterReg, filterNewReg;
 
         // add mouseover effects on region circle
         circles.on('mouseover', function (d) {
@@ -637,9 +733,18 @@ d3.queue()
         circles.exit().remove();
 
         // filter nodes
-        circles.on('click', function (d) {
-            if (filterReg) {
+        var prin_selected = d3.select('.selected');
+        prin_selected.append('text')
+            .classed('.selected-label', true)
+            .text("selected region: all");
 
+        circles.on('click', function (d) {
+
+            prin_selected.text("selected region: " + d.properties.reg_name);
+
+            if (!filterNewReg) {
+                // d3.select(this).classed('highlighted', true);
+                filterNewReg = filterReg; // record current region name
                 var nodeList = [];
 
                 store.nodes.forEach(function (d, i) {
@@ -649,11 +754,11 @@ d3.queue()
                                 g.nodes.splice(i, 1);
                             }
                         })
-                    } else {
-                        nodeList.push(d.id);
+                    } 
+                    else {
+                        // nodeList.push(d.id);
                     }
                 })
-
                 var links = [];
                 g.links.forEach(function (d, i) {
                     if (d.source.region === filterReg) {
@@ -663,10 +768,48 @@ d3.queue()
 
                 g.links = links;
 
-                console.log(g.links);
+                initGraph();
+
+            } else if (filterNewReg && filterNewReg !== filterReg) {
+                // reset to have all nodes
+                g.links = [];
+                g.nodes = [];
+
+                store.links.forEach(function (d, i) {
+                    g.links.push($.extend(true, {}, d));
+                });
+
+                store.nodes.forEach(function (d) {
+                    g.nodes.push($.extend(true, {}, d));
+                })
 
                 initGraph();
 
+                // filter by new region name
+                filterNewReg = filterReg;
+                var nodeList = [];
+                store.nodes.forEach(function (d, i) {
+                    if (!d.domain && d.region !== filterReg) {
+                        g.nodes.forEach(function (n, i) {
+                            if (d.id === n.id) {
+                                g.nodes.splice(i, 1);
+                            }
+                        })
+                    } 
+                    else {
+                        // nodeList.push(d.id);
+                    }
+                })
+                var links = [];
+                g.links.forEach(function (d, i) {
+                    if (d.source.region === filterReg) {
+                        links.push(d);
+                    }
+                })
+
+                g.links = links;
+
+                initGraph();
             }
         })
 
@@ -680,6 +823,9 @@ d3.queue()
         cartogram.on("click", function (d) {
             var outside = allCircles.filter(equalToEventTarget).empty();
             if (outside) {
+
+                prin_selected.text("selected region: all");
+
                 g.links = [];
                 g.nodes = [];
 

@@ -56583,7 +56583,7 @@
                 ],
                 "type": "Polygon",
                 "properties": {
-                    "reg_name": "Valle d'Aosta/Vallée d'Aoste",
+                    "reg_name": "Valle D'Aosta",
                     "reg_istat_code_num": 2,
                     "reg_istat_code": "02"
                 }
@@ -56616,7 +56616,7 @@
                 ],
                 "type": "Polygon",
                 "properties": {
-                    "reg_name": "Trentino-Alto Adige/Südtirol",
+                    "reg_name": "Trentino Alto Adige",
                     "reg_istat_code_num": 4,
                     "reg_istat_code": "04"
                 }
@@ -56755,7 +56755,7 @@
                 ],
                 "type": "MultiPolygon",
                 "properties": {
-                    "reg_name": "Friuli-Venezia Giulia",
+                    "reg_name": "Friuli Venezia Giulia",
                     "reg_istat_code_num": 6,
                     "reg_istat_code": "06"
                 }
@@ -56846,7 +56846,7 @@
                 ],
                 "type": "MultiPolygon",
                 "properties": {
-                    "reg_name": "Emilia-Romagna",
+                    "reg_name": "Emilia Romagna",
                     "reg_istat_code_num": 8,
                     "reg_istat_code": "08"
                 }
