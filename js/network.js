@@ -66,7 +66,7 @@ d3.queue()
         var threshold_b = 100;
 
         var radius_a = 0.004;
-        var radius_b = 0.04;
+        var radius_b = 0.05;
         var radius_c = 0.1;
 
         // real-time calculation
@@ -204,17 +204,17 @@ d3.queue()
                 if (maxDegree > threshold_a) {
                     if (d.domain === "Y") {
                         var newDegree = degree.find(o => o.id === d.id);
-                        return newDegree.weight * 0.004;
+                        return newDegree.weight * radius_a;
                     } else {
-                        return d.degree * 0.004;
+                        return d.degree * radius_a;
                     }
                 } else {
                     if (d.domain === "Y") {
                         // console.log(d.id);
                         var newDegree = degree.find(o => o.id === d.id);
-                        return newDegree.weight * 0.2;
+                        return newDegree.weight * 0.1;
                     } else {
-                        return d.degree * 0.004;
+                        return d.degree * radius_a;
                     }
                 }
             }));
