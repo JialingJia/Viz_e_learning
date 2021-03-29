@@ -680,41 +680,41 @@ d3.queue()
 
         // create a force simulation and add forces to it
         // new force simulation creation	
-        // var simulationGeo = d3.forceSimulation()
-        //     .velocityDecay(0.5)
-        //     .force("cx", d3.forceX().x(d => d.x0).strength(0.6))
-        //     .force("cy", d3.forceY().y(d => d.y0).strength(0.6))
-        //     .force("x", d3.forceX().x(d => d.x0).strength(0.6))
-        //     .force("y", d3.forceY().y(d => d.y0).strength(0.6))
-        //     // .force('center', d3.forceCenter(width / 2, height / 2))
-        //     .force('collision', d3.forceCollide().radius(function (d) {
-        //         // return d.r/2;
-        //         return d.r / 1.8;
-        //     }))
-        //     .force('charge', d3.forceManyBody().strength(3)) //make nodes repulse away from each other
-        //.stop();
+        var simulationGeo = d3.forceSimulation()
+        .velocityDecay(0.5)
+            .force("cx", d3.forceX().x(d => d.x0).strength(0.7))
+            .force("cy", d3.forceY().y(d => d.y0).strength(0.7))
+            .force("x", d3.forceX().x(d => d.x0).strength(0.7))
+            .force("y", d3.forceY().y(d => d.y0).strength(0.7))
+            // .force('center', d3.forceCenter(width / 2, height / 2))
+            .force('collision', d3.forceCollide().radius(function (d) {
+                // return d.r/2;
+                return d.r / 1.8;
+            }))
+            .force('charge', d3.forceManyBody().strength(3)) //make nodes repulse away from each other
+        .stop();
 
         // Apply these forces to the nodes and update their positions.
         // Once the force algorithm is happy with positions ('alpha' value is low enough), simulations will stop.
-        // simulationGeo
-        //     .nodes(geojson)
-        //     .on("tick", function (d) {
-        //         circles
-        //             .attr("cx", function (d) {
-        //                 return d.x;
-        //             })
-        //             .attr("cy", function (d) {
-        //                 return d.y;
-        //             })
-        //         labels
-        //             .attr("x", function (d) {
-        //                 return d.x;
-        //             })
-        //             .attr("y", function (d) {
-        //                 return d.y;
-        //             })
-        //     });
-        // simulationGeo.alpha(1).restart();
+        simulationGeo
+            .nodes(geojson)
+            .on("tick", function (d) {
+                circles
+                    .attr("cx", function (d) {
+                        return d.x;
+                    })
+                    .attr("cy", function (d) {
+                        return d.y;
+                    })
+                labels
+                    .attr("x", function (d) {
+                        return d.x;
+                    })
+                    .attr("y", function (d) {
+                        return d.y;
+                    })
+            });
+        simulationGeo.alpha(1).restart();
 
         // add filter for the network data
         var filterReg, filterNewReg;
