@@ -28,7 +28,8 @@ var cartogram = d3.select("#cartogram").append("svg")
 geograph = cartogram.append('g');
 
 var width_carto = 300
-height_carto = 300;
+height_carto = 300
+radius = 135;
 
 cartogram.attr('width', width_carto).attr('height', height_carto);
 geograph.attr('transform', 'translate(' + [0, 0] + ')');
@@ -49,11 +50,22 @@ function sigmoid(z) {
     return (1 + Math.exp(-z / k));
 }
 
+//tree graph
+var treegraph = d3.select('#tree').append('svg')
+positiontree = treegraph.append('g');
+
+var width_tree = 300
+height_tree = 300;
+
+treegraph.attr('width', width_tree).attr('height', height_tree);
+positiontree.attr("transform", "translate(" + (width_tree / 2) + "," + (height_tree / 2) + ")");
+
 // load data
 d3.queue()
     .defer(d3.json, "./data/proto_data.json")
     .defer(d3.json, "./cartogram/data/regions.json")
-    .await(function (error, graph, data) {
+    .defer(d3.json, "./data/proto_tree.json")
+    .await(function (error, graphdata, geodata, treedata) {
         if (error) throw error;
 
         // graph
@@ -92,8 +104,8 @@ d3.queue()
             return obj;
         }
 
-        g = graph;
-        store = $.extend(true, {}, graph);
+        g = graphdata;
+        store = $.extend(true, {}, graphdata);
 
         initGraph();
 
@@ -277,6 +289,22 @@ d3.queue()
                     context.arc(circle.x, circle.y, 1, 0, 2 * Math.PI);
                     context.fillStyle = "rgba(255, 255, 255, 0.2)";
                     context.fill();
+                }
+            }
+
+            if (positionLevel) {
+                for (const circle of g.nodes) {
+                    if (!circle.domain && circle.position == positionLevel) {
+                        context.beginPath();
+                        drawNode(circle);
+                        context.arc(circle.x, circle.y, 2.5, 0, 2 * Math.PI);
+                        context.fillStyle = "rgba(255, 86, 74, 0.8)";
+                        context.fill();
+
+                        context.fillStyle = "rgba(255, 255, 255, 1)";
+                        context.font = "14px roboto";
+                        context.fillText((circle.id + " " + circle.region), circle.x + 5, circle.y + 2);
+                    }
                 }
             }
 
@@ -495,6 +523,7 @@ d3.queue()
         var closeNode;
         d3.select(canvas).on("mousemove", function () {
             var p = d3.mouse(this);
+            // console.log(p);
             var pZoom = transform.invert(p);
             closeNode = simulation.find(pZoom[0], pZoom[1]);
         });
@@ -573,7 +602,7 @@ d3.queue()
 
         // cartogram graph
         // var geojson = topojson.feature(data, data.objects.provinces).features;
-        var geojson = topojson.feature(data, data.objects.regions).features;
+        var geojson = topojson.feature(geodata, geodata.objects.regions).features;
         console.log(geojson);
 
         // Compute the projected centroid, area and length of the side
@@ -681,7 +710,7 @@ d3.queue()
         // create a force simulation and add forces to it
         // new force simulation creation	
         var simulationGeo = d3.forceSimulation()
-        .velocityDecay(0.5)
+            .velocityDecay(0.5)
             .force("cx", d3.forceX().x(d => d.x0).strength(0.7))
             .force("cy", d3.forceY().y(d => d.y0).strength(0.7))
             .force("x", d3.forceX().x(d => d.x0).strength(0.7))
@@ -692,7 +721,7 @@ d3.queue()
                 return d.r / 1.8;
             }))
             .force('charge', d3.forceManyBody().strength(3)) //make nodes repulse away from each other
-        .stop();
+            .stop();
 
         // Apply these forces to the nodes and update their positions.
         // Once the force algorithm is happy with positions ('alpha' value is low enough), simulations will stop.
@@ -856,60 +885,95 @@ d3.queue()
             }
         })
 
-        $("#region").change(function () {
-            var filterRegion = $(this).val();
-            console.log(filterRegion);
 
-            // if (filterRegion === "all") {
+        // tree graph
 
-            //     g.links = [];
-            //     g.nodes = [];
+        var positionLevel;
 
-            //     store.links.forEach(function (d, i) {
-            //         g.links.push($.extend(true, {}, d));
-            //     });
+        var tree = d3.tree()
+            .size([2 * Math.PI, radius])
+            .separation(function (a, b) {
+                return (a.parent == b.parent ? 1 : 2) / a.depth;
+            });
 
-            //     store.nodes.forEach(function (d) {
-            //         g.nodes.push($.extend(true, {}, d));
-            //     })
+        const depthScale = d3.scaleOrdinal()
+            // .domain([0,5])
+            // .range(['#F1F9FB','#314F94']);
+            .domain([0, 1, 2, 3, 4, 5])
+            .range(['white', '#F1F9FB', '#DDF1F2', '#BAD7EA', '#628ABF', '#314F94']);
 
-            //     console.log(g.nodes);
+        updateTree(treedata);
 
-            //     initGraph();
+        function updateTree(data) {
+            var root = tree(d3.hierarchy(data));
+            console.log(root.descendants());
 
-            // } else {
+            var link = positiontree.selectAll(".link")
+                .data(root.links())
+                .enter().append("path")
+                .attr("class", "treelink")
+                .attr("d", d3.linkRadial()
+                    .angle(function (d) {
+                        return d.x;
+                    })
+                    .radius(function (d) {
+                        return d.y;
+                    }))
+                .style("stroke-width", function (d) {
+                    return 0.2;
+                });
 
-            //     var nodeList = [];
+            var node = positiontree.selectAll(".node")
+                .data(root.descendants())
+                .enter().append("g")
+                .attr("class", function (d) {
+                    return "node" + (d.children ? "tree--internal" : "tree--leaf");
+                })
+                .attr("transform", function (d) {
+                    return "translate(" + radialPoint(d.x, d.y) + ")";
+                });
 
-            //     // g.nodes = store.nodes;
-            //     // g.links = store.links;
+            node.append("circle")
+                .attr("r", function (d) {
+                    // return d.data.number;
+                    return 1;
+                })
+                .attr("fill", "#fff")
+                .style('opacity', 1);
 
-            //     store.nodes.forEach(function (d, i) {
-            //         if (!d.domain && d.region !== filterRegion) {
-            //             g.nodes.forEach(function (n, i) {
-            //                 if (d.id === n.id) {
-            //                     g.nodes.splice(i, 1);
-            //                 }
-            //             })
-            //         } else {
-            //             nodeList.push(d.id);
-            //         }
-            //     })
 
-            //     var links = [];
-            //     g.links.forEach(function (d, i) {
-            //         if (d.source.region === filterRegion) {
-            //             links.push(d);
-            //         }
-            //     })
+            node.append("circle")
+                .attr("r", function (d) {
+                    // return d.data.number;
+                    return 6;
+                })
+                .style('opacity', 0);
 
-            //     g.links = links;
 
-            //     console.log(g.links);
+            // add mouseover effects on tree nodes
+            var tree_name = d3.select('.position');
 
-            //     initGraph();
+            // Highlight on mouse over
+            node.on('mouseover', function (d) {
+                    d3.select(this).classed('treehighlighted', true)
+                    tree_name.append('text')
+                        .classed('province-label', true)
+                        .attr('x', 0)
+                        .attr('y', 0)
+                        .text(`${d.data.name},${d.data.position_name}`);
 
-            // }
+                    positionLevel = d.data.name;
+                    console.log("positionLevel", positionLevel);
+                })
+                .on('mouseout', function (d) {
+                    positionLevel = null;
+                    d3.select(this).classed('treehighlighted', false);
+                    tree_name.selectAll('text.province-label').remove();
+                });
+        }
 
-        })
+        function radialPoint(x, y) {
+            return [(y = +y) * Math.cos(x -= Math.PI / 2), y * Math.sin(x)];
+        }
+
     })

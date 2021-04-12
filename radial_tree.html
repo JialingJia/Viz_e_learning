@@ -103,7 +103,7 @@
             .domain([0,1,2,3,4,5])
             .range(['white','#F1F9FB','#DDF1F2','#BAD7EA','#628ABF','#314F94']);
 
-    d3.json("data/tree_lombardia.json", function (error, data) {
+    d3.json("data/proto_tree.json", function (error, data) {
         if (error) throw error;
 
         update(data);
@@ -175,15 +175,14 @@
                 return "rotate(" + (d.x < Math.PI ? d.x - Math.PI / 2 : d.x + Math.PI / 2) * 180 / Math.PI +
                     ")";
             })
-            // .text(function (d) {
-            //     if (d.data.name == "Milano, Advisory") {
-            //         return d.data.name;
-            //     } else {
-            //         d3.select(this).attr("opacity", 0)
-            //         //return (`${d.data.name}`);
-            //         return (`${d.data.name},${d3.format('.2f')(d.data.value)}`);  
-            //     }
-            // });
+            .text(function (d) {
+                if (d.data.name == "hierarchy position") {
+                    return d.data.name;
+                } else {
+                    d3.select(this).attr("opacity", 0)
+                    return (`${d.data.name},${d.data.position_name}`);  
+                }
+            });
     }
     function radialPoint(x, y) {
         return [(y = +y) * Math.cos(x -= Math.PI / 2), y * Math.sin(x)];

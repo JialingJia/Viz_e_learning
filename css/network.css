@@ -45,6 +45,15 @@
      z-index: auto;
  }
 
+ .selected {
+     z-index: 4;
+     color: #5EFFEF;
+     position: absolute;
+     left: 13px;
+     top: 60px;
+ }
+
+ /* cartogram */
  #cartogram {
      z-index: 4;
      background-color: #222;
@@ -54,18 +63,9 @@
      border-radius: 100%;
  }
 
- /* cartogram */
  .info {
      color: #5EFFEF;
      position: absolute;
- }
-
- .selected {
-     z-index: 4;
-     color: #5EFFEF;
-     position: absolute;
-     left: 13px;
-     top: 60px;
  }
 
  path.province {
@@ -110,3 +110,64 @@
      fill: white;
      text-anchor: middle;
  }
+
+ /* tree */
+ #tree {
+     z-index: 4;
+     background-color: #222;
+     position: absolute;
+     top: 500px;
+     right: 50px;
+     border-radius: 100%;
+ }
+
+ .node text {
+     font: 12px sans-serif;
+ }
+
+ .node.active text {
+     opacity: 100;
+     /* font-weight: bold; */
+ }
+
+ .tree--internal circle {
+     /* fill: rgb(175, 175, 175); */
+ }
+
+ .tree--internal text {
+     text-shadow: 0 1px 0 #fff, 0 -1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff;
+ }
+
+ .tree--leaf text {
+     text-shadow: 0 1px 0 rgb(238, 58, 238), 0 -1px 0 rgb(238, 58, 238), 1px 0 0 rgb(238, 58, 238), -1px 0 0 rgb(238, 58, 238);
+ }
+
+ .treelink {
+     fill: none;
+     stroke: white;
+     /* stroke-width: 0.5; */
+     /* opacity: 0.1; */
+ }
+
+ .position {
+     color: #5EFFEF;
+     position: absolute;
+ }
+
+g.treehighlighted {
+      opacity: 1;
+      stroke-width: 7;
+      stroke: #78fff2;
+  }
+
+ g.node {
+     cursor: pointer;
+ }
+
+ /* text {
+     font-family: FontAwesome;
+     -webkit-user-select: none;
+     -moz-user-select: none;
+     -ms-user-select: none;
+     user-select: none;
+ }  */
