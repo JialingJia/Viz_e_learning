@@ -58,7 +58,7 @@ var width_tree = 300
 height_tree = 350;
 
 treegraph.attr('width', width_tree).attr('height', height_tree);
-positiontree.attr("transform", "translate(" + (width_tree / 2) + "," + (height_tree / 2) + ")");
+positiontree.attr("transform", "translate(" + (width_tree / 2) + "," + (height_tree / 2 + 20) + ")");
 
 // load data
 d3.queue()
@@ -642,7 +642,7 @@ d3.queue()
         // console.log("degree:", degree);
 
         // Circles
-        var prin_name = d3.select('.info');
+        var prin_name = d3.select('#position-1');
         var circles = geograph.selectAll('circle.province')
             .data(geojson)
             .enter()
@@ -1054,7 +1054,7 @@ d3.queue()
                 .style('opacity', 1);
 
             // add mouseover effects on tree nodes
-            var tree_name = d3.select('.position');
+            var tree_name = d3.select('#position-2');
 
             // Highlight on mouse over
             var treeNode = positiontree.selectAll("g");
@@ -1066,7 +1066,7 @@ d3.queue()
                         .classed('province-label', true)
                         .attr('dx', 5 + "px")
                         .attr('dy', 5 + "px")
-                        .text(`Position_level: ${d.data.name}`);
+                        .text(`${d.data.name}`);
 
                     positionLevel = d.data.name;
                     console.log("positionLevel", positionLevel);

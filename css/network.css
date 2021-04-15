@@ -53,6 +53,13 @@
      top: 60px;
  }
 
+.info {
+      color: #c7c7c7;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+  }
+
  /* cartogram */
  #cartogram {
      z-index: 4;
@@ -63,11 +70,11 @@
      /* border-radius: 100%; */
  }
 
- .info {
+ #position-1 {
      color: #5EFFEF;
      position: absolute;
      top: 10px;
-     left: 10px;
+     right: 10px;
  }
 
  path.province {
@@ -151,10 +158,10 @@
      /* opacity: 0.1; */
  }
 
- .position {
+ #position-2 {
      color: #5EFFEF;
      position: absolute;
-     left: 10px;
+     right: 10px;
      top: 10px;
  }
 
