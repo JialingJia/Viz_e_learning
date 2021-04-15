@@ -29,7 +29,7 @@ geograph = cartogram.append('g');
 
 var width_carto = 300
 height_carto = 300
-radius = 135;
+radius = 130;
 
 cartogram.attr('width', width_carto).attr('height', height_carto);
 geograph.attr('transform', 'translate(' + [0, 0] + ')');
@@ -64,7 +64,7 @@ positiontree.attr("transform", "translate(" + (width_tree / 2) + "," + (height_t
 d3.queue()
     .defer(d3.json, "./data/proto_data.json")
     .defer(d3.json, "./cartogram/data/regions.json")
-    .defer(d3.json, "./data/proto_tree.json")
+    .defer(d3.csv, "./data/tree.csv")
     .await(function (error, graphdata, geodata, treedata) {
         if (error) throw error;
 
@@ -72,7 +72,8 @@ d3.queue()
         var g, store;
         var degree, selfScore, validScore;
         var minDegree, maxDegree;
-        var degreeList, scoreList, degreeData;
+        var degreeList, scoreList, levelList, degreeData;
+        var tempLevel;
 
         var threshold_a = 200;
         var threshold_b = 100;
@@ -124,14 +125,14 @@ d3.queue()
                 return d.id;
             })
 
-            console.log("updateNode:", node);
-            console.log("updateLink:", link);
+            // console.log("updateNode:", node);
+            // console.log("updateLink:", link);
 
             // update links and nodes
             var newLink = link.enter().append("custom").attr("class", "line");
             var newNode = node.enter().append("custom").attr("class", "circle");
 
-            console.log("newNode:", newNode);
+            // console.log("newNode:", newNode);
             // console.log(g.nodes);
 
             // update + enter
@@ -142,7 +143,7 @@ d3.queue()
             link.exit().remove();
             node.exit().remove();
 
-            console.log("finalNode:", node);
+            // console.log("finalNode:", node);
 
             simulation
                 .nodes(g.nodes)
@@ -159,11 +160,13 @@ d3.queue()
 
             // calculate degree and score simultaneously
             degreeList = [];
-            scoreList = []
+            scoreList = [];
+            levelList = [];
 
             link.each(function (edge, i) {
                 // console.log(edge.target);
                 degreeList.push(edge.target.id);
+                levelList.push(edge.source.position.toString());
                 scoreList.push({
                     "key": edge.target.id,
                     "selfScore": edge.self_score,
@@ -171,6 +174,13 @@ d3.queue()
                 })
             })
 
+            // find unique position level
+            function uniqueArray(a) {
+                return [...new Set(a)];
+            }
+            tempLevel = uniqueArray(levelList);
+
+            // console.log("tempLevel:", tempLevel);
             // console.log("finalLink:", link);
             // console.log("degreelist:", degreeList);
 
@@ -193,7 +203,7 @@ d3.queue()
                 valid_score: aggregateValidscore[key] / degreeData[key]
             }))
 
-            console.log("degreeData:", degreeData);
+            // console.log("degreeData:", degreeData);
             minDegree = Math.min.apply(null, degree.map(item => item.weight));
             maxDegree = Math.max.apply(null, degree.map(item => item.weight));
             // console.log("minDegree:", minDegree);
@@ -207,7 +217,7 @@ d3.queue()
             });
 
             // console.log("degreeList: ", degreeList);
-            console.log("degree:", degree);
+            // console.log("degree:", degree);
 
 
             // var newDegree = degree.find(o => o.id === node.id);
@@ -293,11 +303,11 @@ d3.queue()
             }
 
             if (positionLevel) {
+                context.beginPath();
                 for (const circle of g.nodes) {
+                    drawNode(circle);
                     if (!circle.domain && circle.position == positionLevel) {
-                        context.beginPath();
-                        drawNode(circle);
-                        context.arc(circle.x, circle.y, 2.5, 0, 2 * Math.PI);
+                        context.arc(circle.x, circle.y, 1.5, 0, 2 * Math.PI);
                         context.fillStyle = "rgba(255, 86, 74, 0.8)";
                         context.fill();
 
@@ -603,7 +613,7 @@ d3.queue()
         // cartogram graph
         // var geojson = topojson.feature(data, data.objects.provinces).features;
         var geojson = topojson.feature(geodata, geodata.objects.regions).features;
-        console.log(geojson);
+        // console.log(geojson);
 
         // Compute the projected centroid, area and length of the side
         // of the squares.
@@ -639,8 +649,8 @@ d3.queue()
             .append('circle')
             .classed('province', true);
 
-        console.log("geojson:", geojson);
-        console.log("g.nodes", g.nodes);
+        // console.log("geojson:", geojson);
+        // console.log("g.nodes", g.nodes);
 
         var regionList = [];
         g.nodes.forEach(function (d, i) {
@@ -660,11 +670,11 @@ d3.queue()
         }
 
         var regionCal = aggregate(regionList);
-        console.log("regionCal:", regionCal);
+        // console.log("regionCal:", regionCal);
 
         var uniqueRegion = regionList.filter((v, i, a) => a.indexOf(v) === i);
 
-        console.log("uniqueRegion:", uniqueRegion);
+        // console.log("uniqueRegion:", uniqueRegion);
 
         circles
             .attr('cx', function (d) {
@@ -752,7 +762,7 @@ d3.queue()
         circles.on('mouseover', function (d) {
                 // Highlight on mouse over
                 d3.select(this).classed('highlighted', true);
-                console.log(this);
+                // console.log(this);
                 prin_name.append('text')
                     .classed('province-label', true)
                     .attr('x', 0)
@@ -770,7 +780,7 @@ d3.queue()
 
         circles.exit().remove();
 
-        // filter nodes
+        // filter network nodes
         function filterData() {
             var domainList = [];
             var links = [];
@@ -812,6 +822,34 @@ d3.queue()
             initGraph();
         }
 
+        // filter org tree
+        function filterTree() {
+            // console.log("tempLevel:", tempLevel);
+            storeTree = [];
+            treedata.forEach(function (row) {
+                var datarow = [];
+                row.taxonomy = row.parent.split(',');
+                row.taxonomy.forEach(function (key, i) {
+                    newKey = key.replace(/\s/g, '');
+                    if (tempLevel.includes(newKey.toString())) {
+                        datarow.push(key);
+
+                    }
+                })
+                if (datarow.length != 0) {
+                    storeTree.push(datarow);
+                }
+            })
+
+            console.log("storeTree:", storeTree);
+
+            storeTree.forEach(function (row) {
+                row.taxonomy = row;
+            })
+
+            updateTree(burrow(storeTree)); // update tree
+        }
+
         // display filter region
         var prin_selected = d3.select('.selected');
 
@@ -828,6 +866,8 @@ d3.queue()
 
                 filterNewReg = filterReg; // record current region name
                 filterData();
+                filterTree();
+
 
             } else if (filterNewReg && filterNewReg !== filterReg) {
                 // reset to have all nodes
@@ -849,7 +889,9 @@ d3.queue()
                 // filter by new region name
                 filterNewReg = filterReg; // record current region name
 
-                filterData();
+                filterData(); // filter network data
+                filterTree(); // filter tree data
+
             }
         })
 
@@ -882,35 +924,98 @@ d3.queue()
                 // console.log("g.nodes:", g.nodes);
 
                 initGraph();
+
+                // reset tree to rootdata
+                filterTree();
             }
         })
 
 
         // tree graph
+        var positionLevel; // set variable when hovering level
 
-        var positionLevel;
-
+        // create d3 tree
         var tree = d3.tree()
             .size([2 * Math.PI, radius])
             .separation(function (a, b) {
                 return (a.parent == b.parent ? 1 : 2) / a.depth;
             });
 
-        const depthScale = d3.scaleOrdinal()
-            // .domain([0,5])
-            // .range(['#F1F9FB','#314F94']);
-            .domain([0, 1, 2, 3, 4, 5])
-            .range(['white', '#F1F9FB', '#DDF1F2', '#BAD7EA', '#628ABF', '#314F94']);
+        // build tree data from csv
+        var burrow = function (table) {
+            // create nested object
+            var obj = {};
+            table.forEach(function (row) {
+                // start at root
+                var layer = obj;
 
-        updateTree(treedata);
+                // create children as nested objects
+                row.taxonomy.forEach(function (key) {
+                    layer[key] = key in layer ? layer[key] : {};
+                    layer = layer[key];
+                });
+            });
 
+            // recursively create children array
+            var descend = function (obj, depth) {
+                var arr = [];
+                var depth = depth || 0;
+                for (var k in obj) {
+                    var child = {
+                        name: k,
+                        depth: depth,
+                        children: descend(obj[k], depth + 1)
+                    };
+                    arr.push(child);
+                }
+                return arr;
+            };
+
+            // use descend to create nested children arrys
+            return {
+                name: "root",
+                children: descend(obj, 1),
+                depth: 0
+            }
+        };
+
+        // prune data by current tempLevel
+        treedata.forEach(function (row) {
+            row.taxonomy = row.parent.split(",");
+        });
+
+        // rootdata = burrow(treedata); // create burrow for csv data
+        var storeTree; // create temporal tree data
+
+        // updateTree(rootdata); // initual setup
+        filterTree();
+
+        // tree update
         function updateTree(data) {
-            var root = tree(d3.hierarchy(data));
-            console.log(root.descendants());
 
-            var link = positiontree.selectAll(".link")
-                .data(root.links())
-                .enter().append("path")
+            console.log("datatree:", data);
+
+            var root = tree(d3.hierarchy(data));
+
+            var link = positiontree.selectAll("path")
+                .data(root.links(), function (d) {
+                    return d;
+                })
+
+            var node = positiontree.selectAll("g")
+                .data(root.descendants(), function (d) {
+                    return d;
+                })
+
+            // console.log("treeLink", link);
+            console.log("treeNode", node);
+
+            // exit selections
+            link.exit().remove();
+            node.exit().remove();
+
+            // enter new links and nodes
+            var newLink = link.enter().append("path")
                 .attr("class", "treelink")
                 .attr("d", d3.linkRadial()
                     .angle(function (d) {
@@ -923,44 +1028,45 @@ d3.queue()
                     return 0.2;
                 });
 
-            var node = positiontree.selectAll(".node")
-                .data(root.descendants())
-                .enter().append("g")
+            var newNode = node.enter().append("g")
                 .attr("class", function (d) {
                     return "node" + (d.children ? "tree--internal" : "tree--leaf");
                 })
                 .attr("transform", function (d) {
                     return "translate(" + radialPoint(d.x, d.y) + ")";
-                });
+                })
+
+            // console.log("newtreeLink:", newLink);
+            // console.log("newtreeNode:", newNode);
+
+            // update + enter
+            link = link.merge(newLink);
+            node = node.merge(newNode)
 
             node.append("circle")
-                .attr("r", function (d) {
-                    // return d.data.number;
-                    return 1;
-                })
+                .attr("r", 6)
                 .attr("fill", "#fff")
-                .style('opacity', 1);
-
-
-            node.append("circle")
-                .attr("r", function (d) {
-                    // return d.data.number;
-                    return 6;
-                })
                 .style('opacity', 0);
 
+            node.append("circle")
+                .attr("r", 1)
+                .attr("fill", "#fff")
+                .style('opacity', 1);
 
             // add mouseover effects on tree nodes
             var tree_name = d3.select('.position');
 
             // Highlight on mouse over
-            node.on('mouseover', function (d) {
+            var treeNode = positiontree.selectAll("g");
+
+            treeNode.on('mouseover', function (d) {
+                    console.log("mouseover:", "true");
                     d3.select(this).classed('treehighlighted', true)
                     tree_name.append('text')
                         .classed('province-label', true)
                         .attr('x', 0)
                         .attr('y', 0)
-                        .text(`${d.data.name},${d.data.position_name}`);
+                        .text(`position_level: ${d.data.name}`);
 
                     positionLevel = d.data.name;
                     console.log("positionLevel", positionLevel);
