@@ -28,11 +28,11 @@ var cartogram = d3.select("#cartogram").append("svg")
 geograph = cartogram.append('g');
 
 var width_carto = 300
-height_carto = 300
+height_carto = 350
 radius = 130;
 
 cartogram.attr('width', width_carto).attr('height', height_carto);
-geograph.attr('transform', 'translate(' + [0, 0] + ')');
+geograph.attr('transform', 'translate(' + [0, 30] + ')');
 
 // Create the geographic projection
 var projection = d3.geoMercator()
@@ -55,7 +55,7 @@ var treegraph = d3.select('#tree').append('svg')
 positiontree = treegraph.append('g');
 
 var width_tree = 300
-height_tree = 300;
+height_tree = 350;
 
 treegraph.attr('width', width_tree).attr('height', height_tree);
 positiontree.attr("transform", "translate(" + (width_tree / 2) + "," + (height_tree / 2) + ")");
@@ -936,7 +936,7 @@ d3.queue()
 
         // create d3 tree
         var tree = d3.tree()
-            .size([2 * Math.PI, radius])
+            .size([2 * Math.PI, 120])
             .separation(function (a, b) {
                 return (a.parent == b.parent ? 1 : 2) / a.depth;
             });
@@ -1064,9 +1064,9 @@ d3.queue()
                     d3.select(this).classed('treehighlighted', true)
                     tree_name.append('text')
                         .classed('province-label', true)
-                        .attr('x', 0)
-                        .attr('y', 0)
-                        .text(`position_level: ${d.data.name}`);
+                        .attr('dx', 5 + "px")
+                        .attr('dy', 5 + "px")
+                        .text(`Position_level: ${d.data.name}`);
 
                     positionLevel = d.data.name;
                     console.log("positionLevel", positionLevel);
