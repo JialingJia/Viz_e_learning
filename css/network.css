@@ -53,12 +53,39 @@
      top: 60px;
  }
 
-.info {
-      color: #c7c7c7;
-      position: absolute;
-      top: 10px;
-      left: 10px;
-  }
+ .info {
+     color: #c7c7c7;
+     position: absolute;
+     top: 10px;
+     left: 10px;
+ }
+
+ /* legend */
+ .legendGroup {
+     position: absolute;
+     z-index: 4;
+     height: 300px;
+     bottom: 50px;
+     left: 13px;
+ }
+
+ #legend {
+     position: relative;
+     z-index: 4;
+     display: block;
+     height: 200px;
+     /* top: 0px; */
+     /* left: 13px; */
+ }
+
+ #legendScore {
+     position: relative;
+     display: block;
+     z-index: 4;
+     /* height: 150px; */
+     /* bottom: 0px; */
+     /* left: 0px; */
+ }
 
  /* cartogram */
  #cartogram {
@@ -165,11 +192,11 @@
      top: 10px;
  }
 
-g.treehighlighted {
-      opacity: 1;
-      stroke-width: 7;
-      stroke: #78fff2;
-  }
+ g.treehighlighted {
+     opacity: 1;
+     stroke-width: 7;
+     stroke: #78fff2;
+ }
 
  g.node {
      cursor: pointer;

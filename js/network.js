@@ -60,6 +60,34 @@ height_tree = 350;
 treegraph.attr('width', width_tree).attr('height', height_tree);
 positiontree.attr("transform", "translate(" + (width_tree / 2) + "," + (height_tree / 2 + 20) + ")");
 
+// age color setting
+var ageColor = [{
+        "age": "18-29",
+        "color": 'rgba(255, 176, 189, 0.8)'
+    },
+    {
+        "age": "30-39",
+        "color": 'rgba(185, 222, 128, 0.8)'
+    },
+    {
+        "age": "40-49",
+        "color": 'rgba(255, 192, 117, 0.8)'
+    },
+    {
+        "age": "50-59",
+        "color": 'rgba(122, 226, 216, 0.8)'
+    },
+    {
+        "age": "60-69",
+        "color": 'rgba(214, 203, 249, 0.8)'
+    },
+    {
+        "age": "70+",
+        "color": 'rgba(192, 192, 192, 0.8)'
+    }
+];
+
+
 // load data
 d3.queue()
     .defer(d3.json, "./data/proto_data.json")
@@ -261,7 +289,7 @@ d3.queue()
 
             // set font based on degree
             function getFont(val) {
-                var size = Math.log(val.weight) * 1.5;
+                var size = Math.log(val.weight);
                 return (size | 0) + "px roboto";
             }
 
@@ -299,22 +327,6 @@ d3.queue()
                     context.arc(circle.x, circle.y, 1, 0, 2 * Math.PI);
                     context.fillStyle = "rgba(255, 255, 255, 0.2)";
                     context.fill();
-                }
-            }
-
-            if (positionLevel) {
-                context.beginPath();
-                for (const circle of g.nodes) {
-                    drawNode(circle);
-                    if (!circle.domain && circle.position == positionLevel) {
-                        context.arc(circle.x, circle.y, 1.5, 0, 2 * Math.PI);
-                        context.fillStyle = "rgba(255, 86, 74, 0.8)";
-                        context.fill();
-
-                        context.fillStyle = "rgba(255, 255, 255, 1)";
-                        context.font = "14px roboto";
-                        context.fillText((circle.id + " " + circle.region), circle.x + 5, circle.y + 2);
-                    }
                 }
             }
 
@@ -434,32 +446,6 @@ d3.queue()
                 }
             }
 
-            var ageColor = [{
-                    "age": "18-29",
-                    "color": 'rgba(255, 176, 189, 0.8)'
-                },
-                {
-                    "age": "30-39",
-                    "color": 'rgba(185, 222, 128, 0.8)'
-                },
-                {
-                    "age": "40-49",
-                    "color": 'rgba(255, 192, 117, 0.8)'
-                },
-                {
-                    "age": "50-59",
-                    "color": 'rgba(122, 226, 216, 0.8)'
-                },
-                {
-                    "age": "60-69",
-                    "color": 'rgba(214, 203, 249, 0.8)'
-                },
-                {
-                    "age": "70+",
-                    "color": 'rgba(192, 192, 192, 0.8)'
-                }
-            ];
-
             if (filterValue === "age") {
                 for (const circle of g.nodes) {
                     context.beginPath();
@@ -511,9 +497,9 @@ d3.queue()
                         } else {
                             context.arc(circle.x, circle.y, newDegree.weight * radius_c, 0, 2 * Math.PI);
                         }
-                        context.fillStyle = 'rgb(' + Math.floor(255 - 83.3 * newSelfscore.self_score) + ', ' +
-                            Math.floor(255 - 47 * newSelfscore.self_score) + ', ' +
-                            Math.floor(255 - 40.3 * newSelfscore.self_score) + ')';
+                        context.fillStyle = 'rgb(' + Math.floor(255 - 50 * newSelfscore.self_score) + ', ' +
+                            Math.floor(255 - 28.2 * newSelfscore.self_score) + ', ' +
+                            Math.floor(255 - 24.2 * newSelfscore.self_score) + ')';
                         context.fill();
 
                         context.fillStyle = "rgba(240, 240, 240, 1)";
@@ -522,6 +508,22 @@ d3.queue()
 
                         // console.log(newSelfscore);
 
+                    }
+                }
+            }
+
+            if (positionLevel) {
+                context.beginPath();
+                for (const circle of g.nodes) {
+                    drawNode(circle);
+                    if (!circle.domain && circle.position == positionLevel) {
+                        context.arc(circle.x, circle.y, 1.5, 0, 2 * Math.PI);
+                        context.fillStyle = "rgba(255, 86, 74, 0.8)";
+                        context.fill();
+
+                        context.fillStyle = "rgba(255, 255, 255, 1)";
+                        context.font = "14px roboto";
+                        context.fillText((circle.id + " " + circle.region), circle.x + 5, circle.y + 2);
                     }
                 }
             }
@@ -583,21 +585,100 @@ d3.queue()
 
         // filter color by different groups
         var filterValue = $('#group').val();
-        console.log("filter:", filterValue);
-        $('#group').change(function () {
+        var legends = d3.select('#legend');
 
+        $('#group').change(function () {
             filterValue = $(this).val();
-            console.log(filterValue);
+            // set legends
+            if (filterValue == "gender") {
+
+                legends.selectAll("rect").remove();
+                legends.selectAll("text").remove();
+
+                legends.append("rect").attr("x", 40).attr("y", 20)
+                    .attr("width", 8).attr("height", 8)
+                    .style("fill", "rgb(255, 253, 41)");
+
+                legends.append("text").attr("x", 70).attr("y", 25)
+                    .classed("province-label", true)
+                    .text("female")
+                    .attr("alignment-baseline", "middle")
+
+                legends.append("rect").attr("x", 40).attr("y", 50)
+                    .attr("width", 8).attr("height", 8)
+                    .style("fill", "rgb(196, 71, 255)");
+
+                legends.append("text").attr("x", 70).attr("y", 55)
+                    .classed("province-label", true)
+                    .text("male")
+                    .attr("alignment-baseline", "middle")
+
+            } else if (filterValue == "age") {
+                legends.selectAll("rect").remove();
+                legends.selectAll("text").remove();
+
+                ageColor.forEach(function (value, j) {
+                    legends.append("rect").attr("x", 40).attr("y", 20 + j * 30)
+                        .attr("width", 8).attr("height", 8)
+                        .style("fill", `${value.color}`);
+
+                    legends.append("text").attr("x", 70).attr("y", 25 + j * 30)
+                        .classed("province-label", true)
+                        .text(`${value.age}`)
+                        .attr("alignment-baseline", "middle")
+                })
+            } else {
+                legends.selectAll("rect").remove();
+                legends.selectAll("text").remove();
+            }
+            // console.log(filterValue);
         })
 
         // apply score
         var score;
+        var legendScore = d3.select('#legendScore');
+        var defs = legendScore.append("defs");
+        var linearGradient = defs.append("linearGradient")
+            .attr("id", "linear-gradient")
+
         $('#score:checkbox').change(function () {
             if (this.checked) {
                 score = 1;
                 console.log("checked");
+
+                linearGradient
+                    .attr('x1', "0%")
+                    .attr('y1', '0%')
+                    .attr('x2', '100%')
+                    .attr('y2', '0%')
+
+                linearGradient.append("stop")
+                    .attr("offset", "0%")
+                    .attr("stop-color", "#ffffff")
+
+                linearGradient.append("stop")
+                    .attr('offset', "100%")
+                    .attr('stop-color', '#057286')
+
+                legendScore.append('rect')
+                    .attr("x", 40).attr("y", 20)
+                    .attr('width', 110).attr('height', 15)
+                    .style('fill', 'url(#linear-gradient)')
+
+                legendScore.append("text").attr("x", 40).attr("y", 40)
+                    .classed("province-label", true)
+                    .text("0")
+                    .attr("alignment-baseline", "before-edge")
+
+                legendScore.append("text").attr("x", 140).attr("y", 40)
+                    .classed("province-label", true)
+                    .text("5")
+                    .attr("alignment-baseline", "before-edge")
+
             } else {
                 score = null;
+                legendScore.selectAll("rect").remove();
+                legendScore.selectAll("text").remove();
             }
         })
 
