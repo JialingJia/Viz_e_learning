@@ -374,6 +374,8 @@ d3.queue()
                     }
                 }
 
+                console.log("closeNode:", closeNode);
+
                 if (closeNode.domain) {
 
                     var newDegree = degree.find(o => o.id === closeNode.id);
@@ -392,7 +394,7 @@ d3.queue()
 
                     context.fillStyle = "rgba(240, 240, 240, 1)";
                     context.font = getFont(newDegree);
-                    context.fillText(closeNode.id, closeNode.x + 2, closeNode.y + 2);
+                    context.fillText("Knowledge_area", closeNode.x + 2, closeNode.y + 2);
 
                 } else {
 
@@ -441,7 +443,7 @@ d3.queue()
 
                         context.fillStyle = "rgba(240, 240, 240, 0.8)";
                         context.font = getFont(newDegree);
-                        context.fillText(circle.id, circle.x + 2, circle.y + 2);
+                        context.fillText("Knowledge_area", circle.x + 2, circle.y + 2);
                     }
                 }
             }
@@ -473,7 +475,7 @@ d3.queue()
 
                         context.fillStyle = "rgba(240, 240, 240, 0.8)";
                         context.font = getFont(newDegree);
-                        context.fillText(circle.id, circle.x + 2, circle.y + 2);
+                        context.fillText("Knowledge_area", circle.x + 2, circle.y + 2);
                     }
                 }
             }
@@ -504,7 +506,7 @@ d3.queue()
 
                         context.fillStyle = "rgba(240, 240, 240, 1)";
                         context.font = getFont(newDegree);
-                        context.fillText(circle.id + " " + newSelfscore.self_score.toFixed(2), circle.x + 2, circle.y + 2);
+                        context.fillText("knowledge_area" + " " + newSelfscore.self_score.toFixed(2), circle.x + 2, circle.y + 2);
 
                         // console.log(newSelfscore);
 
@@ -1089,7 +1091,7 @@ d3.queue()
                 })
 
             // console.log("treeLink", link);
-            console.log("treeNode", node);
+            // console.log("treeNode", node);
 
             // exit selections
             link.exit().remove();
@@ -1129,9 +1131,19 @@ d3.queue()
                 .attr("fill", "#fff")
                 .style('opacity', 0);
 
+            console.log("treeNode", node);
+
             node.append("circle")
                 .attr("r", 1)
-                .attr("fill", "#fff")
+                .attr("fill", function (d) {
+                    if (closeNode) {
+                        if (closeNode.position == d.data.name.trim()) {
+                            return "#78fff2";
+                        }
+                    } else {
+                        return "#fff";
+                    }
+                })
                 .style('opacity', 1);
 
             // add mouseover effects on tree nodes
