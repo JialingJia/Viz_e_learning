@@ -119,12 +119,12 @@ d3.queue()
         var degreeList, scoreList, levelList, degreeData;
         var tempLevel;
 
-        var threshold_a = 200;
+        var threshold_a = 700;
         var threshold_b = 100;
 
         var radius_a = 0.004;
-        var radius_b = 0.05;
-        var radius_c = 0.1;
+        var radius_b = 0.02;
+        var radius_c = 0.05;
 
         // real-time calculation
         function aggregate(array) {
@@ -278,9 +278,9 @@ d3.queue()
                     if (d.domain === "Y") {
                         // console.log(d.id);
                         var newDegree = degree.find(o => o.id === d.id);
-                        return newDegree.weight * 0.1;
+                        return newDegree.weight * radius_c;
                     } else {
-                        return d.degree * radius_a;
+                        return d.degree * radius_c;
                     }
                 }
             }));
@@ -347,9 +347,9 @@ d3.queue()
             }
 
             //add draw conditions for tooltips
-            if (closeNode && filterValue === 'default' && !score) {
+            if (closeNode && filterValue === 'default' && !score && !positionClick) {
                 context.beginPath();
-                drawNode(closeNode);
+                // drawNode(closeNode);
 
                 for (const edge of g.links) {
                     var newDegree = degree.find(o => o.id === edge.target.id);
@@ -381,19 +381,19 @@ d3.queue()
                         drawNode(edge.target);
                         if (maxDegree > threshold_a) {
                             context.arc(edge.target.x, edge.target.y, newDegree.weight * radius_a, 0, 2 * Math.PI);
-                            context.font = 5 * (edge.self_score + edge.valid_score)/2 + "px roboto";
+                            context.font = 5 * (edge.self_score + edge.valid_score) / 2 + "px roboto";
                         } else if (threshold_a > maxDegree > threshold_b) {
                             context.arc(edge.target.x, edge.target.y, newDegree.weight * radius_b, 0, 2 * Math.PI);
-                            context.font = 2.5 * (edge.self_score + edge.valid_score)/2 + "px roboto";
+                            context.font = 2.5 * (edge.self_score + edge.valid_score) / 2 + "px roboto";
                         } else {
                             context.arc(edge.target.x, edge.target.y, newDegree.weight * radius_c, 0, 2 * Math.PI);
-                            context.font = 1.5 * (edge.self_score + edge.valid_score)/2 + "px roboto";
+                            context.font = 1.5 * (edge.self_score + edge.valid_score) / 2 + "px roboto";
                         }
                         context.fillStyle = "rgba(10, 171, 179, 1)";
                         context.fill();
 
                         context.fillStyle = "rgba(240, 240, 240, 1)";
-                        context.fillText((edge.target.id + " " + ((edge.self_score + edge.valid_score)/2).toFixed(2)), edge.target.x + 2, edge.target.y + 2);
+                        context.fillText((edge.target.id + " " + ((edge.self_score + edge.valid_score) / 2).toFixed(2)), edge.target.x + 2, edge.target.y + 2);
                     }
                 }
 
@@ -543,12 +543,101 @@ d3.queue()
                     drawNode(circle);
                     if (!circle.domain && circle.position == positionLevel) {
                         context.arc(circle.x, circle.y, 1.5, 0, 2 * Math.PI);
-                        context.fillStyle = "rgba(255, 86, 74, 0.8)";
+                        context.fillStyle = "rgba(10, 171, 179, 1)";
                         context.fill();
 
                         context.fillStyle = "rgba(255, 255, 255, 1)";
-                        context.font = "14px roboto";
+                        context.font = "10px roboto";
                         context.fillText(circle.id, circle.x + 5, circle.y + 2);
+                    }
+                }
+            }
+
+            if (positionClick) {
+                context.beginPath();
+                for (const circle of g.nodes) {
+                    if (!circle.domain && circle.position == positionClick) {
+                        drawNode(circle);
+                        context.arc(circle.x, circle.y, 1.5, 0, 2 * Math.PI);
+                        context.fillStyle = "rgba(235, 64, 52, 1)";
+                        context.fill();
+
+                        context.fillStyle = "rgba(255, 255, 255, 0.5)";
+                        context.font = "10px roboto";
+                        context.fillText(circle.id, circle.x + 5, circle.y + 2);
+
+                    }
+                }
+            }
+
+            if (closeNode && positionClick && filterValue === 'default') {
+                context.beginPath();
+                // drawNode(closeNode);
+
+                for (const edge of g.links) {
+                    var newDegree = degree.find(o => o.id === edge.target.id);
+                    var maxDegree = Math.max.apply(null, degree.map(item => item.weight));
+                    // if mouse over domain
+                    if (edge.target.id == closeNode.id && edge.source.position == positionClick) {
+                        context.beginPath();
+
+                        drawLink(edge);
+                        context.strokeStyle = "rgba(235, 64, 52, 0.5)";
+                        context.lineWidth = 1;
+                        context.stroke();
+
+                        drawNode(edge.source);
+                        context.arc(edge.source.x, edge.source.y, 1, 0, 2 * Math.PI);
+                        context.fillStyle = "rgba(235, 64, 52, 1)";
+                        context.fill();
+
+                        drawNode(edge.target);
+                        if (maxDegree > threshold_a) {
+                            context.arc(edge.target.x, edge.target.y, newDegree.weight * radius_a, 0, 2 * Math.PI);
+                        } else if (threshold_a > maxDegree > threshold_b) {
+                            context.arc(edge.target.x, edge.target.y, newDegree.weight * radius_b, 0, 2 * Math.PI);
+                        } else {
+                            context.arc(edge.target.x, edge.target.y, newDegree.weight * radius_c, 0, 2 * Math.PI);
+                        }
+                        context.fillStyle = "rgba(235, 64, 52, 1)";
+                        context.fill();
+
+                        context.fillStyle = "rgba(240, 240, 240, 1)";
+                        context.font = "10px roboto";
+                        context.fillText(edge.target.id, edge.target.x + 2, edge.target.y + 2);
+
+                        context.fillStyle = "rgba(235, 64, 52, 1)";
+                        context.font = "10px roboto";
+                        context.fillText((edge.source.id + " " + ((edge.self_score + edge.valid_score) / 2).toFixed(2)), edge.source.x + 5, edge.source.y + 2);
+                    }
+                    // if mouse over employee
+                    if (edge.source.id == closeNode.id && edge.source.position == positionClick) {
+                        context.beginPath();
+
+                        drawLink(edge);
+                        context.strokeStyle = "rgba(235, 64, 52, 0.5)";
+                        context.lineWidth = 1;
+                        context.stroke();
+
+                        drawNode(edge.source);
+                        context.arc(edge.source.x, edge.source.y, 1, 0, 2 * Math.PI);
+                        context.fillStyle = "rgba(235, 64, 52, 1)";
+                        context.fill();
+
+                        drawNode(edge.target);
+                        if (maxDegree > threshold_a) {
+                            context.arc(edge.target.x, edge.target.y, newDegree.weight * radius_a, 0, 2 * Math.PI);
+                        } else if (threshold_a > maxDegree > threshold_b) {
+                            context.arc(edge.target.x, edge.target.y, newDegree.weight * radius_b, 0, 2 * Math.PI);
+                        } else {
+                            context.arc(edge.target.x, edge.target.y, newDegree.weight * radius_c, 0, 2 * Math.PI);
+                        }
+                        context.fillStyle = "rgba(235, 64, 52, 1)";
+                        context.fill();
+
+                        context.fillStyle = "rgba(240, 240, 240, 1)";
+                        context.font = "8px roboto";
+                        context.fillText((edge.target.id + " " + ((edge.self_score + edge.valid_score) / 2).toFixed(2)), edge.target.x + 2, edge.target.y + 2);
                     }
                 }
             }
@@ -859,7 +948,7 @@ d3.queue()
                         return d.y;
                     })
             });
-        simulationGeo.alpha(1).restart();
+        simulationGeo.alpha(0.8).restart();
 
         // add filter for the network data
         var filterReg, filterNewReg;
@@ -957,16 +1046,16 @@ d3.queue()
         }
 
         // display filter region
-        var prin_selected = d3.select('.selected');
+        var region_selected = d3.select('.selectedRegion');
 
-        prin_selected.append('text')
+        region_selected.append('text')
             .classed('.selected-label', true)
             .text("selected region: all");
 
         // toggle filter by event
         circles.on('click', function (d) {
 
-            prin_selected.text("selected region: " + d.properties.reg_name);
+            region_selected.text("selected region: " + d.properties.reg_name);
 
             if (!filterNewReg) {
 
@@ -1012,7 +1101,7 @@ d3.queue()
             var outside = allCircles.filter(equalToEventTarget).empty();
             if (outside) {
 
-                prin_selected.text("selected region: all");
+                region_selected.text("selected region: all");
 
                 g.links = [];
                 g.nodes = [];
@@ -1039,6 +1128,7 @@ d3.queue()
 
         // tree graph
         var positionLevel; // set variable when hovering level
+        var positionClick;
 
         // create d3 tree
         var tree = d3.tree()
@@ -1095,6 +1185,14 @@ d3.queue()
 
         // updateTree(rootdata); // initual setup
         filterTree();
+
+        // add text display for position
+        var tree_name = d3.select('#position-2');
+        var position_selected = d3.select('.selectedPosition');
+
+        position_selected.append('text')
+            .classed('.selected-label', true)
+            .text("selected position: all");
 
         // tree update
         function updateTree(data) {
@@ -1169,9 +1267,6 @@ d3.queue()
                 })
                 .style('opacity', 1);
 
-            // add mouseover effects on tree nodes
-            var tree_name = d3.select('#position-2');
-
             // Highlight on mouse over
             var treeNode = positiontree.selectAll("g");
 
@@ -1192,6 +1287,25 @@ d3.queue()
                     d3.select(this).classed('treehighlighted', false);
                     tree_name.selectAll('text.province-label').remove();
                 });
+
+            treeNode.on('click', function (d) {
+                position_selected.text("selected position: " + d.data.name);
+                positionClick = d.data.name;
+            });
+
+            // click outside org chart
+            var treeCircle = positiontree.selectAll("circle")
+            treegraph.on("click", function (d) {
+                var outside = treeCircle.filter(equalToEventTarget).empty();
+                if (outside) {
+                    positionClick = null;
+                    console.log("outside");
+
+                    position_selected.text("selected position: all");
+                    tree_name.selectAll('text.province-label').remove();
+                }
+            })
+
         }
 
         function radialPoint(x, y) {

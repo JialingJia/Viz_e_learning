@@ -45,13 +45,21 @@
      z-index: auto;
  }
 
- .selected {
+ .selectedRegion {
      z-index: 4;
      color: #5EFFEF;
      position: absolute;
      left: 13px;
      top: 60px;
  }
+
+  .selectedPosition {
+      z-index: 4;
+      color: #5EFFEF;
+      position: relative;
+      left: 13px;
+      top: 30px;
+  }
 
  .info {
      color: #c7c7c7;
@@ -197,6 +205,12 @@
      stroke-width: 7;
      stroke: #78fff2;
  }
+
+  g.treehighclicked {
+      opacity: 1;
+      stroke-width: 7;
+      stroke: #eb4034;
+  }
 
  g.node {
      cursor: pointer;
