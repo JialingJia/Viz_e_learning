@@ -87,14 +87,30 @@ var ageColor = [{
     }
 ];
 
+// loader settings
+var opts = {
+    lines: 9, // The number of lines to draw
+    length: 5, // The length of each line
+    width: 4, // The line thickness
+    radius: 10, // The radius of the inner circle
+    color: '#666666', // #rgb or #rrggbb or array of colors
+    speed: 1.9, // Rounds per second
+    trail: 40, // Afterglow percentage
+    className: 'spinner', // The CSS class to assign to the spinner
+};
+
+var target = document.getElementById("network");
+var spinner = new Spinner(opts).spin(target);
 
 // load data
 d3.queue()
-    .defer(d3.json, "./data/proto_data.json")
+    .defer(d3.json, "./data/proto_data_2.json")
     .defer(d3.json, "./cartogram/data/regions.json")
     .defer(d3.csv, "./data/tree.csv")
     .await(function (error, graphdata, geodata, treedata) {
         if (error) throw error;
+
+        spinner.stop()
 
         // graph
         var g, store;
@@ -290,7 +306,7 @@ d3.queue()
             // set font based on degree
             function getFont(val) {
                 var size = Math.log(val.weight);
-                return (size | 0) + "px roboto";
+                return (size * 1.5 | 0) + "px roboto";
             }
 
             // draw nodes and edges
@@ -358,19 +374,26 @@ d3.queue()
 
                         drawLink(edge);
                         context.strokeStyle = "rgba(10, 171, 179, 0.5)";
-                        context.lineWidth = 1;
+                        context.lineWidth = 0.5;
                         context.stroke();
+                        // console.log("edge:", edge);
 
                         drawNode(edge.target);
                         if (maxDegree > threshold_a) {
                             context.arc(edge.target.x, edge.target.y, newDegree.weight * radius_a, 0, 2 * Math.PI);
+                            context.font = 5 * (edge.self_score + edge.valid_score)/2 + "px roboto";
                         } else if (threshold_a > maxDegree > threshold_b) {
                             context.arc(edge.target.x, edge.target.y, newDegree.weight * radius_b, 0, 2 * Math.PI);
+                            context.font = 2.5 * (edge.self_score + edge.valid_score)/2 + "px roboto";
                         } else {
                             context.arc(edge.target.x, edge.target.y, newDegree.weight * radius_c, 0, 2 * Math.PI);
+                            context.font = 1.5 * (edge.self_score + edge.valid_score)/2 + "px roboto";
                         }
                         context.fillStyle = "rgba(10, 171, 179, 1)";
                         context.fill();
+
+                        context.fillStyle = "rgba(240, 240, 240, 1)";
+                        context.fillText((edge.target.id + " " + ((edge.self_score + edge.valid_score)/2).toFixed(2)), edge.target.x + 2, edge.target.y + 2);
                     }
                 }
 
@@ -394,7 +417,7 @@ d3.queue()
 
                     context.fillStyle = "rgba(240, 240, 240, 1)";
                     context.font = getFont(newDegree);
-                    context.fillText("Knowledge_area", closeNode.x + 2, closeNode.y + 2);
+                    context.fillText(closeNode.id, closeNode.x + 2, closeNode.y + 2);
 
                 } else {
 
@@ -405,7 +428,7 @@ d3.queue()
 
                     context.fillStyle = "rgba(255, 255, 255, 1)";
                     context.font = "10px roboto";
-                    context.fillText((closeNode.id + " " + closeNode.region), closeNode.x + 20, closeNode.y - 10);
+                    context.fillText(closeNode.id, closeNode.x + 2, closeNode.y + 2);
                 }
             }
 
@@ -443,7 +466,7 @@ d3.queue()
 
                         context.fillStyle = "rgba(240, 240, 240, 0.8)";
                         context.font = getFont(newDegree);
-                        context.fillText("Knowledge_area", circle.x + 2, circle.y + 2);
+                        context.fillText(circle.id, circle.x + 2, circle.y + 2);
                     }
                 }
             }
@@ -475,7 +498,7 @@ d3.queue()
 
                         context.fillStyle = "rgba(240, 240, 240, 0.8)";
                         context.font = getFont(newDegree);
-                        context.fillText("Knowledge_area", circle.x + 2, circle.y + 2);
+                        context.fillText(circle.id, circle.x + 2, circle.y + 2);
                     }
                 }
             }
@@ -506,7 +529,7 @@ d3.queue()
 
                         context.fillStyle = "rgba(240, 240, 240, 1)";
                         context.font = getFont(newDegree);
-                        context.fillText("knowledge_area" + " " + newSelfscore.self_score.toFixed(2), circle.x + 2, circle.y + 2);
+                        context.fillText(circle.id + " " + newSelfscore.self_score.toFixed(2), circle.x + 2, circle.y + 2);
 
                         // console.log(newSelfscore);
 
@@ -525,7 +548,7 @@ d3.queue()
 
                         context.fillStyle = "rgba(255, 255, 255, 1)";
                         context.font = "14px roboto";
-                        context.fillText((circle.id + " " + circle.region), circle.x + 5, circle.y + 2);
+                        context.fillText(circle.id, circle.x + 5, circle.y + 2);
                     }
                 }
             }
